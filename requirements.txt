@@ -1,0 +1,10 @@
+streamlit==1.36.0
+python-dotenv==1.0.1
+
+langchain-community==0.2.6
+langchain-text-splitters==0.2.2
+langchain-google-genai==1.0.10
+pypdf==4.2.0
+
+sentence-transformers==3.0.1
+chromadb==0.5.5
