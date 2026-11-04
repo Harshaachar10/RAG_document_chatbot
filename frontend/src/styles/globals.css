@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+@theme {
+  --color-sidebar: #10283f;
+  --color-primary: #1b5e8c;
+  --color-accent: #2e86c1;
+  --color-surface: #ffffff;
+  --color-background: #f8fafc;
+  --color-border: #e5e7eb;
+  --color-foreground: #111827;
+  --color-muted: #64748b;
+  --radius-card: 12px;
+}
+
+:root {
+  color: #111827;
+  background: #f8fafc;
+  font-family: "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: #f8fafc;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-weight: 600;
+  color: #111827;
+}
+
+:focus-visible {
+  outline: 2px solid #1b5e8c;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.drawer-enter {
+  transition: transform 180ms ease, opacity 180ms ease;
+}

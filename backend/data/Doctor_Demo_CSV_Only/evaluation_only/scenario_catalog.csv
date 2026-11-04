@@ -1,0 +1,36 @@
+﻿scenario_id,scenario,example,primary_record_id,doctor_id,review_id,evidence_id,expected_action,explanation
+SC-01,Name change,Sarah Lee becomes Sarah Lee-Kim,REC-00601,HCP-000123,REV-001,EVD-01081,link,Explicit prior-name statement plus matching credential
+SC-02,Initials,S. Lee-Kim versus Sarah Lee-Kim,REC-00602,HCP-000123,REV-002,EVD-01082,link,Individual email corroborates abbreviation
+SC-03,Spelling mistake,Sara Lee-Kim versus Sarah Lee-Kim,REC-00603,HCP-000123,REV-003,EVD-01083,link,Matching individual credential and email
+SC-04,Nickname,Bill Carter versus William Carter,REC-00604,HCP-000130,REV-004,EVD-01084,link,Credential supports nickname interpretation
+SC-05,Name formatting,"LEE-KIM, SARAH, MD",REC-00605,HCP-000123,REV-005,EVD-01085,link,"Normalize order, case, title and credentials"
+SC-06,Middle name missing,Sarah Ellis versus Sarah Jane Ellis,REC-00606,HCP-000131,REV-006,EVD-01086,link,Email and credential support missing middle name
+SC-07,Duplicate CRM entries,Two reps entered Sarah separately,REC-00607,HCP-000123,REV-007,EVD-01087,link,"Separate source IDs, same corroborated identity"
+SC-08,NPI missing in some sources,Event entry has no identifier,REC-00608,HCP-000123,REV-008,EVD-01088,link,Associate existing synthetic reference after identity matching
+SC-09,NPI missing everywhere,Sarah Jane Ellis has no provider identifier in inputs,REC-00609,HCP-000131,REV-009,EVD-01089,link_without_npi,Internal doctor ID remains usable; official NPI stays null
+SC-10,Malformed NPI,Identifier contains letters and wrong length,REC-00610,HCP-000123,REV-010,EVD-01090,review,Malformed value must not become an identity anchor
+SC-11,Wrong doctor NPI,Sarah record contains Priya synthetic identifier,REC-00611,HCP-000123,REV-011,EVD-01091,review,Name/credential contradict supplied identifier
+SC-12,Organization NPI,Clinic identifier used in doctor record,REC-00612,HCP-000123,REV-012,EVD-01092,review,Organization is distinct from individual
+SC-13,Same NPI conflicting people,Priya record carries Sarah identifier,REC-00613,HCP-000124,REV-013,EVD-01093,review,Do not trust shared supplied identifier alone
+SC-14,Different validated identifiers,Two James Chens have different reference identifiers,REC-00614,HCP-000126,REV-014,EVD-01094,keep_separate,Distinct synthetic reference identities and credentials
+SC-15,Same name different locations,Priya Sharma in Boston versus Chicago,REC-00615,HCP-000124,REV-015,EVD-01095,keep_separate,Distinct credentials plus location and specialty
+SC-16,Same name same hospital,Two James Chens at Harbor Demo Hospital,REC-00616,HCP-000126,REV-016,EVD-01096,keep_separate,Distinct individual credentials despite shared practice
+SC-17,Jr and Sr,Robert Miller Jr. versus Robert Miller Sr.,REC-00617,HCP-000128,REV-017,EVD-01097,keep_separate,Suffix plus individual credentials distinguish identities
+SC-18,Shared contact,Same clinic phone/email for different doctors,REC-00618,HCP-000126,REV-018,EVD-01098,keep_separate,Shared contact does not override credential conflict
+SC-19,Insufficient information,Event sheet says Dr. Sharma only,REC-00619,HCP-000124,REV-019,EVD-01099,unresolved,No evidence chooses one of the Priya candidates
+SC-20,Transitive bridge,Ambiguous Priya entry resembles both identities,REC-00620,HCP-000124,REV-020,EVD-01100,unresolved,Do not connect conflicting identity groups through weak record
+SC-21,Practice move,Sarah new Lakeshore affiliation effective Sep 1,REC-00621,HCP-000123,REV-021,EVD-01101,propose_update,Document supports new affiliation; cessation of old practice not asserted
+SC-22,Concurrent affiliations,One doctor works at two practices,REC-00622,HCP-000132,REV-022,EVD-01102,retain_both,Explicit concurrent affiliation statement
+SC-23,Address formatting,100 Example St #2 versus 100 Example Street Suite 2,REC-00623,HCP-000123,REV-023,EVD-01103,link,Formatting difference is not a move
+SC-24,Contact change,Professional email changed,REC-00624,HCP-000123,REV-024,EVD-01104,propose_update,Dated contact update supports new value
+SC-25,Specialty variation,Breast oncology versus Medical oncology,REC-00625,HCP-000123,REV-025,EVD-01105,link,"Compatible specialization, not sufficient by itself"
+SC-26,Late old document,2024 invoice ingested after 2026 profile update,REC-00626,HCP-000123,REV-026,EVD-01106,retain_history,Document date must not be replaced by ingestion date
+SC-27,Conflicting current practices,Two recent records disagree about primary practice,REC-00627,HCP-000123,REV-027,EVD-01107,review,Primary preference requires further evidence
+SC-28,Unknown effective date,Now at Lakeshore with no move date,REC-00628,HCP-000123,REV-028,EVD-01108,propose_update,Record observation date; effective date remains null
+SC-29,Complementary fields,"Name, email and credential spread across forms",REC-00629,HCP-000133,REV-029,EVD-01109,link,Combine only supported fields with separate citations
+SC-30,Free-text name change,Note explicitly states formerly Sarah Lee,REC-00630,HCP-000123,REV-030,EVD-01110,propose_update,Extract statement and cite it; do not invent dates
+SC-31,Repeated transactions,Different invoice IDs for one doctor,REC-00631,HCP-000123,REV-031,EVD-01111,link_transactions,"Transactions are legitimate separate events, not duplicate identities"
+SC-32,Repeated ingestion,Same invoice transaction imported again,REC-00632,HCP-000123,REV-032,EVD-01112,exclude_duplicate,Keep ingestion audit but exclude duplicate transaction from sums
+SC-33,Unsupported extraction,Proposal not supported by cited sentence,REC-00633,HCP-000123,REV-033,EVD-01113,reject_proposal,Quoted text says no new affiliation was confirmed
+SC-34,New record after master,New event registration matches existing identity,REC-00634,HCP-000123,REV-034,EVD-01114,link,Retain stable master ID
+SC-35,Correct prior mistake,Priya record previously linked to wrong Priya,REC-00635,HCP-000125,REV-035,EVD-01115,correct_link,Current corrected link and superseded decision remain auditable

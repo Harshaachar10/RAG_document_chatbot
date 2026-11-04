@@ -1,0 +1,126 @@
+evidence_id,source_record_id,document_id,document_version,page_number,block_id,quoted_text,source_field,source_snapshot,citation_label
+EVD-SARAH-01,SR-SARAH-PAY,DOC-001,1,1,p1-b3,Dr. Sarah Lee,recorded_name,2026.09.05,DOC-001 p.1 — Payee name
+EVD-SARAH-02,SR-SARAH-PAY,DOC-001,1,1,p1-b5,Credential: MA-DEMO-7421,credential_reference,2026.09.05,DOC-001 p.1 — Credential
+EVD-SARAH-03,SR-SARAH-EVT,DOC-002,1,1,p1-b3,Registrant: S. Lee,recorded_name,2026.09.10,DOC-002 p.1 — Registrant
+EVD-SARAH-04,SR-SARAH-EVT,DOC-002,1,1,p1-b5,Email: sarah.lee-kim@example.com,email,2026.09.10,DOC-002 p.1 — Email
+EVD-SARAH-05,SR-SARAH-CRED,DOC-003,1,1,p1-b3,"Dr. Sarah Lee-Kim, formerly Dr. Sarah Lee",recorded_name,2026.09.12,DOC-003 p.1 — Name change
+EVD-SARAH-06,SR-SARAH-PRAC,DOC-004,1,1,p1-b4,"New affiliation: Lakeshore Cancer Institute. Effective September 1, 2026.",practice_name,2026.09.12,DOC-004 p.1 — New affiliation
+EVD-SARAH-07,SR-SARAH-CRM,,,,,Sarah Lee-Kim,recorded_name,2026.09.01,CRM row SR-SARAH-CRM
+EVD-DOC-005,,DOC-005,1,1,p1-b3,Priya Sharma — Metro Cardiology Associates,recorded_name,2026.09.01,DOC-005 p.1
+EVD-DOC-006,,DOC-006,1,1,p1-b3,P. Sharma — Gulf Coast Endocrine Clinic,recorded_name,2026.09.01,DOC-006 p.1
+EVD-DOC-007,,DOC-007,1,1,p1-b3,Robert Chen Jr — WA-DEMO-JR01,recorded_name,2026.09.01,DOC-007 p.1
+EVD-DOC-008,,DOC-008,1,1,p1-b3,Robert Chen Sr — WA-DEMO-SR01,recorded_name,2026.09.01,DOC-008 p.1
+EVD-DOC-009,,DOC-009,1,1,p1-b3,Elena Vargas maintains concurrent affiliations,recorded_name,2026.09.01,DOC-009 p.1
+EVD-DOC-010,,DOC-010,1,1,p1-b3,Jonathon Brooks — jonathan.brooks@example.com,recorded_name,2026.09.01,DOC-010 p.1
+EVD-DOC-011,,DOC-011,1,1,p1-b3,Amelia Grant observed at Coastal Pulmonary Group,recorded_name,2026.09.01,DOC-011 p.1
+EVD-DOC-012,,DOC-012,1,1,p1-b3,Diana Patel — NJ-DEMO-8801,recorded_name,2026.09.01,DOC-012 p.1
+EVD-00016,SR-000028,,,,,Jennifer Johnson,recorded_name,2026.09.01,CSV SR-000028
+EVD-00017,SR-000033,,,,,Lisa Hernandez,recorded_name,2026.09.01,CSV SR-000033
+EVD-00018,SR-000036,,,,,T. Rodriguez,recorded_name,2026.09.01,CSV SR-000036
+EVD-00019,SR-000038,,,,,David Martin,recorded_name,2026.09.01,CSV SR-000038
+EVD-00020,SR-000040,,,,,Joseph Martin,recorded_name,2026.09.01,CSV SR-000040
+EVD-00021,SR-000043,,,,,David Brown,recorded_name,2026.09.01,CSV SR-000043
+EVD-00022,SR-000045,,,,,C. Robinson,recorded_name,2026.09.01,CSV SR-000045
+EVD-00023,SR-000048,,,,,Karen Robinson,recorded_name,2026.09.01,CSV SR-000048
+EVD-00024,SR-000052,,,,,Sarah Williams,recorded_name,2026.09.01,CSV SR-000052
+EVD-00025,SR-000055,,,,,Barbara Perez,recorded_name,2026.09.01,CSV SR-000055
+EVD-00026,SR-000058,,,,,Jennifer Harris,recorded_name,2026.09.01,CSV SR-000058
+EVD-00027,SR-000060,,,,,James Martin,recorded_name,2026.09.01,CSV SR-000060
+EVD-00028,SR-000063,,,,,Betty Thomas,recorded_name,2026.09.01,CSV SR-000063
+EVD-00029,SR-000067,,,,,Susan Clark,recorded_name,2026.09.01,CSV SR-000067
+EVD-00030,SR-000070,,,,,Sarah Clark,recorded_name,2026.09.01,CSV SR-000070
+EVD-00031,SR-000073,,,,,Joseph Jones,recorded_name,2026.09.01,CSV SR-000073
+EVD-00032,SR-000078,,,,,Ashley Scott,recorded_name,2026.09.01,CSV SR-000078
+EVD-00033,SR-000082,,,,,William Young,recorded_name,2026.09.01,CSV SR-000082
+EVD-00034,SR-000084,,,,,Donald Martin,recorded_name,2026.09.01,CSV SR-000084
+EVD-00035,SR-000089,,,,,Joshua Nguyen,recorded_name,2026.09.01,CSV SR-000089
+EVD-00036,SR-000091,,,,,B. Allen,recorded_name,2026.09.01,CSV SR-000091
+EVD-00037,SR-000096,,,,,Karen Nguyen,recorded_name,2026.09.01,CSV SR-000096
+EVD-00038,SR-000101,,,,,Patricia Ramirez,recorded_name,2026.09.01,CSV SR-000101
+EVD-00039,SR-000106,,,,,Betty Moore,recorded_name,2026.09.01,CSV SR-000106
+EVD-00040,SR-000109,,,,,Christopher Perez,recorded_name,2026.09.01,CSV SR-000109
+EVD-00041,SR-000113,,,,,Elizabeth Clark,recorded_name,2026.09.01,CSV SR-000113
+EVD-00042,SR-000117,,,,,M. Rodriguez,recorded_name,2026.09.01,CSV SR-000117
+EVD-00043,SR-000121,,,,,Margaret Miller,recorded_name,2026.09.01,CSV SR-000121
+EVD-00044,SR-000125,,,,,Kimberly White,recorded_name,2026.09.01,CSV SR-000125
+EVD-00045,SR-000128,,,,,Ashley Hill,recorded_name,2026.09.01,CSV SR-000128
+EVD-00046,SR-000130,,,,,Matthew Jones,recorded_name,2026.09.01,CSV SR-000130
+EVD-00047,SR-000133,,,,,Elizabeth Thomas,recorded_name,2026.09.01,CSV SR-000133
+EVD-00048,SR-000137,,,,,Paul Martinez,recorded_name,2026.09.01,CSV SR-000137
+EVD-00049,SR-000141,,,,,Dorothy Garcia,recorded_name,2026.09.01,CSV SR-000141
+EVD-00050,SR-000143,,,,,Donald Williams,recorded_name,2026.09.01,CSV SR-000143
+EVD-00051,SR-000148,,,,,William Williams,recorded_name,2026.09.01,CSV SR-000148
+EVD-00052,SR-000153,,,,,Matthew Thomas,recorded_name,2026.09.01,CSV SR-000153
+EVD-00053,SR-000155,,,,,Nancy Moore,recorded_name,2026.09.01,CSV SR-000155
+EVD-00054,SR-000157,,,,,M. Moore,recorded_name,2026.09.01,CSV SR-000157
+EVD-00055,SR-000161,,,,,B. Lewis,recorded_name,2026.09.01,CSV SR-000161
+EVD-00056,SR-000163,,,,,Mark Torres,recorded_name,2026.09.01,CSV SR-000163
+EVD-00057,SR-000165,,,,,P. Hernandez,recorded_name,2026.09.01,CSV SR-000165
+EVD-00058,SR-000170,,,,,Daniel Torres,recorded_name,2026.09.01,CSV SR-000170
+EVD-00059,SR-000174,,,,,Nancy Scott,recorded_name,2026.09.01,CSV SR-000174
+EVD-00060,SR-000177,,,,,Emily Torres,recorded_name,2026.09.01,CSV SR-000177
+EVD-00061,SR-000180,,,,,Charles Flores,recorded_name,2026.09.01,CSV SR-000180
+EVD-00062,SR-000184,,,,,Nancy Walker,recorded_name,2026.09.01,CSV SR-000184
+EVD-00063,SR-000187,,,,,Dorothy Young,recorded_name,2026.09.01,CSV SR-000187
+EVD-00064,SR-000191,,,,,Paul Martin,recorded_name,2026.09.01,CSV SR-000191
+EVD-00065,SR-000194,,,,,Donald Brown,recorded_name,2026.09.01,CSV SR-000194
+EVD-00066,SR-000196,,,,,Donald Harris,recorded_name,2026.09.01,CSV SR-000196
+EVD-00067,SR-000198,,,,,Jessica Wilson,recorded_name,2026.09.01,CSV SR-000198
+EVD-00068,SR-000201,,,,,A. King,recorded_name,2026.09.01,CSV SR-000201
+EVD-00069,SR-000206,,,,,Andrew Thompson,recorded_name,2026.09.01,CSV SR-000206
+EVD-00070,SR-000209,,,,,Barbara Wright,recorded_name,2026.09.01,CSV SR-000209
+EVD-00071,SR-000214,,,,,Robert Garcia,recorded_name,2026.09.01,CSV SR-000214
+EVD-00072,SR-000216,,,,,Emily Martinez,recorded_name,2026.09.01,CSV SR-000216
+EVD-00073,SR-000218,,,,,E. Harris,recorded_name,2026.09.01,CSV SR-000218
+EVD-00074,SR-000223,,,,,Joseph Robinson,recorded_name,2026.09.01,CSV SR-000223
+EVD-00075,SR-000226,,,,,Michael Clark,recorded_name,2026.09.01,CSV SR-000226
+EVD-00076,SR-000231,,,,,Patricia Davis,recorded_name,2026.09.01,CSV SR-000231
+EVD-00077,SR-000235,,,,,Andrew Lopez,recorded_name,2026.09.01,CSV SR-000235
+EVD-00078,SR-000240,,,,,M. Lewis,recorded_name,2026.09.01,CSV SR-000240
+EVD-00079,SR-000245,,,,,Andrew Moore,recorded_name,2026.09.01,CSV SR-000245
+EVD-00080,SR-000248,,,,,P. Robinson,recorded_name,2026.09.01,CSV SR-000248
+EVD-00081,SR-000252,,,,,D. Smith,recorded_name,2026.09.01,CSV SR-000252
+EVD-00082,SR-000255,,,,,Jennifer Nguyen,recorded_name,2026.09.01,CSV SR-000255
+EVD-00083,SR-000259,,,,,Linda Sanchez,recorded_name,2026.09.01,CSV SR-000259
+EVD-00084,SR-000262,,,,,R. Young,recorded_name,2026.09.01,CSV SR-000262
+EVD-00085,SR-000264,,,,,Anthony Martinez,recorded_name,2026.09.01,CSV SR-000264
+EVD-00086,SR-000266,,,,,Christopher Torres,recorded_name,2026.09.01,CSV SR-000266
+EVD-00087,SR-000268,,,,,Mark White,recorded_name,2026.09.01,CSV SR-000268
+EVD-00088,SR-000273,,,,,Kimberly Thomas,recorded_name,2026.09.01,CSV SR-000273
+EVD-00089,SR-000277,,,,,Mark Gonzalez,recorded_name,2026.09.01,CSV SR-000277
+EVD-00090,SR-000280,,,,,Barbara Lopez,recorded_name,2026.09.01,CSV SR-000280
+EVD-00091,SR-000282,,,,,Elizabeth Davis,recorded_name,2026.09.01,CSV SR-000282
+EVD-00092,SR-000285,,,,,D. Anderson,recorded_name,2026.09.01,CSV SR-000285
+EVD-00093,SR-000287,,,,,Joshua Anderson,recorded_name,2026.09.01,CSV SR-000287
+EVD-00094,SR-000289,,,,,C. Martin,recorded_name,2026.09.01,CSV SR-000289
+EVD-00095,SR-000294,,,,,Steven Torres,recorded_name,2026.09.01,CSV SR-000294
+EVD-00096,SR-000297,,,,,Dorothy Clark,recorded_name,2026.09.01,CSV SR-000297
+EVD-00097,SR-000302,,,,,Lisa Brown,recorded_name,2026.09.01,CSV SR-000302
+EVD-00098,SR-000306,,,,,Maria Smith,recorded_name,2026.09.01,CSV SR-000306
+EVD-00099,SR-000310,,,,,William Johnson,recorded_name,2026.09.01,CSV SR-000310
+EVD-00100,SR-000314,,,,,Paul Davis,recorded_name,2026.09.01,CSV SR-000314
+EVD-00101,SR-000316,,,,,Margaret Walker,recorded_name,2026.09.01,CSV SR-000316
+EVD-00102,SR-000319,,,,,Betty Johnson,recorded_name,2026.09.01,CSV SR-000319
+EVD-00103,SR-000321,,,,,Dorothy Moore,recorded_name,2026.09.01,CSV SR-000321
+EVD-00104,SR-000324,,,,,Christopher Taylor,recorded_name,2026.09.01,CSV SR-000324
+EVD-00105,SR-000327,,,,,Steven Torres,recorded_name,2026.09.01,CSV SR-000327
+EVD-00106,SR-000329,,,,,Anthony Martinez,recorded_name,2026.09.01,CSV SR-000329
+EVD-00107,SR-000334,,,,,Thomas Smith,recorded_name,2026.09.01,CSV SR-000334
+EVD-00108,SR-000336,,,,,James King,recorded_name,2026.09.01,CSV SR-000336
+EVD-00109,SR-000341,,,,,Andrew Jackson,recorded_name,2026.09.01,CSV SR-000341
+EVD-00110,SR-000345,,,,,Donald Anderson,recorded_name,2026.09.01,CSV SR-000345
+EVD-00111,SR-000349,,,,,Lisa Jackson,recorded_name,2026.09.01,CSV SR-000349
+EVD-00112,SR-000354,,,,,Nancy Williams,recorded_name,2026.09.01,CSV SR-000354
+EVD-00113,SR-000356,,,,,M. Walker,recorded_name,2026.09.01,CSV SR-000356
+EVD-00114,SR-000359,,,,,Kimberly Robinson,recorded_name,2026.09.01,CSV SR-000359
+EVD-00115,SR-000362,,,,,Patricia Moore,recorded_name,2026.09.01,CSV SR-000362
+EVD-00116,SR-000365,,,,,Joshua Torres,recorded_name,2026.09.01,CSV SR-000365
+EVD-00117,SR-000369,,,,,Thomas Jones,recorded_name,2026.09.01,CSV SR-000369
+EVD-00118,SR-000372,,,,,S. Walker,recorded_name,2026.09.01,CSV SR-000372
+EVD-00119,SR-000377,,,,,Charles Walker,recorded_name,2026.09.01,CSV SR-000377
+EVD-00120,SR-000380,,,,,Betty Rodriguez,recorded_name,2026.09.01,CSV SR-000380
+EVD-00121,SR-000383,,,,,Dorothy Jackson,recorded_name,2026.09.01,CSV SR-000383
+EVD-00122,SR-000388,,,,,Sandra Robinson,recorded_name,2026.09.01,CSV SR-000388
+EVD-00123,SR-000392,,,,,Andrew Williams,recorded_name,2026.09.01,CSV SR-000392
+EVD-00124,SR-000397,,,,,A. Gonzalez,recorded_name,2026.09.01,CSV SR-000397
+EVD-00125,SR-000399,,,,,Kenneth Gonzalez,recorded_name,2026.09.01,CSV SR-000399

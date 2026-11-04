@@ -1,0 +1,121 @@
+doctor_id,preferred_name,given_name,family_name,specialty,primary_affiliation_id,city,state,professional_email,professional_phone,official_npi,npi_status,identity_status,updated_at,version
+HCP-000123,Sarah Lee-Kim,Sarah,Lee-Kim,Oncology,AFF-SARAH-OAK,Boston,MA,sarah.lee-kim@example.com,+1-555-010-1234,,Not verified,active,2026-09-02T16:00:00Z,3
+HCP-000201,Priya Sharma,Priya,Sharma,Cardiology,AFF-PRIYA-A,Chicago,IL,priya.sharma.cardio@example.com,+1-555-020-1001,,Not verified,active,2026-08-20T12:00:00Z,1
+HCP-000202,Priya Sharma,Priya,Sharma,Endocrinology,AFF-PRIYA-B,Houston,TX,priya.sharma.endo@example.com,+1-555-020-2002,,Not verified,active,2026-08-21T12:00:00Z,1
+HCP-000301,Robert Chen Jr,Robert,Chen,Neurology,AFF-CHEN-JR,Seattle,WA,robert.chen.jr@example.com,+1-555-030-3001,,Not verified,active,2026-08-01T10:00:00Z,1
+HCP-000302,Robert Chen Sr,Robert,Chen,Neurology,AFF-CHEN-SR,Seattle,WA,robert.chen.sr@example.com,+1-555-030-3002,,Not verified,active,2026-08-01T10:00:00Z,1
+HCP-000401,Elena Vargas,Elena,Vargas,Hematology,AFF-DUAL-1,Philadelphia,PA,elena.vargas@example.com,+1-555-040-4001,,Not verified,active,2026-08-25T10:00:00Z,1
+HCP-000501,Jonathan Brooks,Jonathan,Brooks,Rheumatology,AFF-MISS-1,Austin,TX,jonathan.brooks@example.com,+1-555-050-5001,,Not verified,active,2026-08-18T10:00:00Z,1
+HCP-000601,Amelia Grant,Amelia,Grant,Pulmonology,AFF-UNK-1,Miami,FL,amelia.grant@example.com,+1-555-060-6001,,Not verified,active,2026-08-12T10:00:00Z,1
+HCP-000701,Marcus Hale,Marcus,Hale,Internal Medicine,AFF-LOW-1,Columbus,OH,marcus.hale@example.com,+1-555-070-7001,,Not verified,active,2026-08-05T10:00:00Z,1
+HCP-000801,Diana Patel,Diana,Patel,Oncology,AFF-LINK-1,Newark,NJ,diana.patel@example.com,+1-555-080-8001,,Not verified,active,2026-08-28T10:00:00Z,1
+HCP-001000,Jennifer Johnson,Jennifer,Johnson,Rheumatology,AFF-HCP-001000,Chicago,IL,jennifer.johnson95@example.com,+1-555-204-9935,,Not verified,active,2026-07-02T08:00:00Z,1
+HCP-001001,Lisa Hernandez,Lisa,Hernandez,Hematology,AFF-HCP-001001,Miami,FL,lisa.hernandez35@example.com,+1-555-818-2169,,Not verified,active,2026-09-24T11:00:00Z,1
+HCP-001002,Thomas Rodriguez,Thomas,Rodriguez,Pulmonology,AFF-HCP-001002,New York,NY,thomas.rodriguez20@example.com,+1-555-742-3621,,Not verified,active,2026-02-13T14:00:00Z,1
+HCP-001003,David Martin,David,Martin,Neurology,AFF-HCP-001003,Los Angeles,CA,david.martin70@example.com,+1-555-897-9689,,Not verified,active,2026-06-16T08:00:00Z,1
+HCP-001004,Joseph Martin,Joseph,Martin,Internal Medicine,AFF-HCP-001004,Tampa,FL,joseph.martin58@example.com,+1-555-223-5061,,Not verified,active,2026-02-11T08:00:00Z,1
+HCP-001005,David Brown,David,Brown,Internal Medicine,AFF-HCP-001005,Miami,FL,david.brown25@example.com,+1-555-294-9786,,Not verified,active,2026-03-14T10:00:00Z,1
+HCP-001006,Charles Robinson,Charles,Robinson,Rheumatology,AFF-HCP-001006,Pittsburgh,PA,charles.robinson25@example.com,+1-555-403-4566,,Not verified,active,2026-09-02T13:00:00Z,1
+HCP-001007,Karen Robinson,Karen,Robinson,Hematology,AFF-HCP-001007,New York,NY,karen.robinson80@example.com,+1-555-676-2638,,Not verified,active,2026-09-07T16:00:00Z,1
+HCP-001008,Sarah Williams,Sarah,Williams,Oncology,AFF-HCP-001008,Miami,FL,sarah.williams34@example.com,+1-555-265-8239,,Not verified,active,2026-09-01T09:00:00Z,1
+HCP-001009,Barbara Perez,Barbara,Perez,Internal Medicine,AFF-HCP-001009,Evanston,IL,barbara.perez90@example.com,+1-555-210-7267,,Not verified,active,2026-08-08T11:00:00Z,1
+HCP-001010,Jennifer Harris,Jennifer,Harris,Neurology,AFF-HCP-001010,Houston,TX,jennifer.harris56@example.com,+1-555-101-9518,,Not verified,active,2026-04-12T14:00:00Z,1
+HCP-001011,James Martin,James,Martin,Rheumatology,AFF-HCP-001011,Evanston,IL,james.martin78@example.com,+1-555-770-6279,,Not verified,active,2026-08-15T18:00:00Z,1
+HCP-001012,Betty Thomas,Betty,Thomas,Endocrinology,AFF-HCP-001012,Boston,MA,betty.thomas29@example.com,+1-555-280-9486,,Not verified,active,2026-01-18T11:00:00Z,1
+HCP-001013,Susan Clark,Susan,Clark,Internal Medicine,AFF-HCP-001013,Cleveland,OH,susan.clark49@example.com,+1-555-588-1096,,Not verified,active,2026-05-25T14:00:00Z,1
+HCP-001014,Sarah Clark,Sarah,Clark,Rheumatology,AFF-HCP-001014,Buffalo,NY,sarah.clark96@example.com,+1-555-652-1853,,Not verified,active,2026-04-21T09:00:00Z,1
+HCP-001015,Joseph Jones,Joseph,Jones,Neurology,AFF-HCP-001015,Rochester,NY,joseph.jones88@example.com,+1-555-714-2983,,Not verified,active,2026-06-18T14:00:00Z,1
+HCP-001016,Ashley Scott,Ashley,Scott,Neurology,AFF-HCP-001016,Tacoma,WA,ashley.scott3@example.com,+1-555-195-5820,,Not verified,active,2026-07-23T11:00:00Z,1
+HCP-001017,William Young,William,Young,Cardiology,AFF-HCP-001017,Worcester,MA,william.young61@example.com,+1-555-590-8216,,Not verified,active,2026-03-02T12:00:00Z,1
+HCP-001018,Donald Martin,Donald,Martin,Internal Medicine,AFF-HCP-001018,Austin,TX,donald.martin8@example.com,+1-555-724-2625,,Not verified,active,2026-04-09T18:00:00Z,1
+HCP-001019,Joshua Nguyen,Joshua,Nguyen,Oncology,AFF-HCP-001019,Austin,TX,joshua.nguyen98@example.com,+1-555-874-3870,,Not verified,active,2026-09-21T15:00:00Z,1
+HCP-001020,Betty Allen,Betty,Allen,Oncology,AFF-HCP-001020,Princeton,NJ,betty.allen7@example.com,+1-555-292-9494,,Not verified,active,2026-08-21T15:00:00Z,1
+HCP-001021,Karen Nguyen,Karen,Nguyen,Pulmonology,AFF-HCP-001021,Los Angeles,CA,karen.nguyen62@example.com,+1-555-453-6446,,Not verified,active,2026-07-15T13:00:00Z,1
+HCP-001022,Patricia Ramirez,Patricia,Ramirez,Cardiology,AFF-HCP-001022,Buffalo,NY,patricia.ramirez89@example.com,+1-555-406-1474,,Not verified,active,2026-06-26T08:00:00Z,1
+HCP-001023,Betty Moore,Betty,Moore,Oncology,AFF-HCP-001023,Cleveland,OH,betty.moore96@example.com,+1-555-608-5689,,Not verified,active,2026-06-08T18:00:00Z,1
+HCP-001024,Christopher Perez,Christopher,Perez,Cardiology,AFF-HCP-001024,Seattle,WA,christopher.perez97@example.com,+1-555-331-7511,,Not verified,active,2026-02-26T14:00:00Z,1
+HCP-001025,Elizabeth Clark,Elizabeth,Clark,Cardiology,AFF-HCP-001025,Tacoma,WA,elizabeth.clark5@example.com,+1-555-806-7070,,Not verified,active,2026-08-15T11:00:00Z,1
+HCP-001026,Maria Rodriguez,Maria,Rodriguez,Oncology,AFF-HCP-001026,Miami,FL,maria.rodriguez42@example.com,+1-555-116-3854,,Not verified,active,2026-01-05T14:00:00Z,1
+HCP-001027,Margaret Miller,Margaret,Miller,Cardiology,AFF-HCP-001027,Newark,NJ,margaret.miller58@example.com,+1-555-333-7779,,Not verified,active,2026-08-13T14:00:00Z,1
+HCP-001028,Kimberly White,Kimberly,White,Cardiology,AFF-HCP-001028,Austin,TX,kimberly.white55@example.com,+1-555-965-1430,,Not verified,active,2026-01-06T12:00:00Z,1
+HCP-001029,Ashley Hill,Ashley,Hill,Pulmonology,AFF-HCP-001029,Pittsburgh,PA,ashley.hill97@example.com,+1-555-624-2864,,Not verified,active,2026-07-04T12:00:00Z,1
+HCP-001030,Matthew Jones,Matthew,Jones,Internal Medicine,AFF-HCP-001030,Cambridge,MA,matthew.jones59@example.com,+1-555-179-6129,,Not verified,active,2026-07-23T18:00:00Z,1
+HCP-001031,Elizabeth Thomas,Elizabeth,Thomas,Cardiology,AFF-HCP-001031,Los Angeles,CA,elizabeth.thomas23@example.com,+1-555-716-3504,,Not verified,active,2026-03-25T18:00:00Z,1
+HCP-001032,Paul Martinez,Paul,Martinez,Oncology,AFF-HCP-001032,Seattle,WA,paul.martinez92@example.com,+1-555-186-9266,,Not verified,active,2026-01-08T15:00:00Z,1
+HCP-001033,Dorothy Garcia,Dorothy,Garcia,Internal Medicine,AFF-HCP-001033,Princeton,NJ,dorothy.garcia47@example.com,+1-555-416-3953,,Not verified,active,2026-06-25T15:00:00Z,1
+HCP-001034,Donald Williams,Donald,Williams,Internal Medicine,AFF-HCP-001034,Miami,FL,donald.williams79@example.com,+1-555-391-8355,,Not verified,active,2026-09-08T12:00:00Z,1
+HCP-001035,William Williams,William,Williams,Rheumatology,AFF-HCP-001035,Seattle,WA,william.williams61@example.com,+1-555-559-1086,,Not verified,active,2026-01-09T11:00:00Z,1
+HCP-001036,Matthew Thomas,Matthew,Thomas,Cardiology,AFF-HCP-001036,Columbus,OH,matthew.thomas6@example.com,+1-555-460-9945,,Not verified,active,2026-03-27T18:00:00Z,1
+HCP-001037,Nancy Moore,Nancy,Moore,Cardiology,AFF-HCP-001037,Tampa,FL,nancy.moore96@example.com,+1-555-550-7334,,Not verified,active,2026-03-16T15:00:00Z,1
+HCP-001038,Margaret Moore,Margaret,Moore,Oncology,AFF-HCP-001038,Rochester,NY,margaret.moore52@example.com,+1-555-472-9406,,Not verified,active,2026-01-05T17:00:00Z,1
+HCP-001039,Barbara Lewis,Barbara,Lewis,Cardiology,AFF-HCP-001039,Tampa,FL,barbara.lewis9@example.com,+1-555-663-9882,,Not verified,active,2026-05-28T10:00:00Z,1
+HCP-001040,Mark Torres,Mark,Torres,Cardiology,AFF-HCP-001040,Los Angeles,CA,mark.torres10@example.com,+1-555-560-8632,,Not verified,active,2026-06-05T16:00:00Z,1
+HCP-001041,Paul Hernandez,Paul,Hernandez,Endocrinology,AFF-HCP-001041,San Diego,CA,paul.hernandez93@example.com,+1-555-719-6531,,Not verified,active,2026-01-03T08:00:00Z,1
+HCP-001042,Daniel Torres,Daniel,Torres,Hematology,AFF-HCP-001042,Chicago,IL,daniel.torres66@example.com,+1-555-578-9171,,Not verified,active,2026-08-01T09:00:00Z,1
+HCP-001043,Nancy Scott,Nancy,Scott,Hematology,AFF-HCP-001043,San Francisco,CA,nancy.scott66@example.com,+1-555-511-9193,,Not verified,active,2026-01-02T10:00:00Z,1
+HCP-001044,Emily Torres,Emily,Torres,Neurology,AFF-HCP-001044,Worcester,MA,emily.torres22@example.com,+1-555-636-7229,,Not verified,active,2026-04-02T17:00:00Z,1
+HCP-001045,Charles Flores,Charles,Flores,Pulmonology,AFF-HCP-001045,Chicago,IL,charles.flores72@example.com,+1-555-405-4684,,Not verified,active,2026-05-23T11:00:00Z,1
+HCP-001046,Nancy Walker,Nancy,Walker,Cardiology,AFF-HCP-001046,San Francisco,CA,nancy.walker21@example.com,+1-555-516-8793,,Not verified,active,2026-04-25T12:00:00Z,1
+HCP-001047,Dorothy Young,Dorothy,Young,Endocrinology,AFF-HCP-001047,Princeton,NJ,dorothy.young25@example.com,+1-555-928-2845,,Not verified,active,2026-03-24T15:00:00Z,1
+HCP-001048,Paul Martin,Paul,Martin,Cardiology,AFF-HCP-001048,Dallas,TX,paul.martin29@example.com,+1-555-324-3188,,Not verified,active,2026-03-15T17:00:00Z,1
+HCP-001049,Donald Brown,Donald,Brown,Pulmonology,AFF-HCP-001049,San Diego,CA,donald.brown59@example.com,+1-555-677-1945,,Not verified,active,2026-05-24T08:00:00Z,1
+HCP-001050,Donald Harris,Donald,Harris,Internal Medicine,AFF-HCP-001050,Rochester,NY,donald.harris70@example.com,+1-555-236-6697,,Not verified,active,2026-03-18T14:00:00Z,1
+HCP-001051,Jessica Wilson,Jessica,Wilson,Cardiology,AFF-HCP-001051,Rochester,NY,jessica.wilson58@example.com,+1-555-712-1797,,Not verified,active,2026-01-13T15:00:00Z,1
+HCP-001052,Anthony King,Anthony,King,Hematology,AFF-HCP-001052,Pittsburgh,PA,anthony.king39@example.com,+1-555-485-4012,,Not verified,active,2026-08-08T11:00:00Z,1
+HCP-001053,Andrew Thompson,Andrew,Thompson,Rheumatology,AFF-HCP-001053,Dallas,TX,andrew.thompson64@example.com,+1-555-577-2615,,Not verified,active,2026-06-07T13:00:00Z,1
+HCP-001054,Barbara Wright,Barbara,Wright,Oncology,AFF-HCP-001054,Newark,NJ,barbara.wright86@example.com,+1-555-149-1104,,Not verified,active,2026-03-27T18:00:00Z,1
+HCP-001055,Robert Garcia,Robert,Garcia,Internal Medicine,AFF-HCP-001055,Pittsburgh,PA,robert.garcia61@example.com,+1-555-157-1154,,Not verified,active,2026-02-16T14:00:00Z,1
+HCP-001056,Emily Martinez,Emily,Martinez,Internal Medicine,AFF-HCP-001056,Buffalo,NY,emily.martinez73@example.com,+1-555-346-7375,,Not verified,active,2026-06-13T10:00:00Z,1
+HCP-001057,Emily Harris,Emily,Harris,Cardiology,AFF-HCP-001057,Columbus,OH,emily.harris92@example.com,+1-555-175-2344,,Not verified,active,2026-03-13T18:00:00Z,1
+HCP-001058,Joseph Robinson,Joseph,Robinson,Cardiology,AFF-HCP-001058,Los Angeles,CA,joseph.robinson51@example.com,+1-555-440-7224,,Not verified,active,2026-08-11T14:00:00Z,1
+HCP-001059,Michael Clark,Michael,Clark,Pulmonology,AFF-HCP-001059,San Diego,CA,michael.clark31@example.com,+1-555-358-3525,,Not verified,active,2026-07-03T15:00:00Z,1
+HCP-001060,Patricia Davis,Patricia,Davis,Endocrinology,AFF-HCP-001060,Tampa,FL,patricia.davis59@example.com,+1-555-903-4389,,Not verified,active,2026-08-12T15:00:00Z,1
+HCP-001061,Andrew Lopez,Andrew,Lopez,Hematology,AFF-HCP-001061,Miami,FL,andrew.lopez15@example.com,+1-555-368-9019,,Not verified,active,2026-06-20T14:00:00Z,1
+HCP-001062,Mark Lewis,Mark,Lewis,Pulmonology,AFF-HCP-001062,San Francisco,CA,mark.lewis4@example.com,+1-555-914-4613,,Not verified,active,2026-01-09T11:00:00Z,1
+HCP-001063,Andrew Moore,Andrew,Moore,Endocrinology,AFF-HCP-001063,Tampa,FL,andrew.moore74@example.com,+1-555-373-9428,,Not verified,active,2026-03-25T14:00:00Z,1
+HCP-001064,Patricia Robinson,Patricia,Robinson,Hematology,AFF-HCP-001064,Rochester,NY,patricia.robinson28@example.com,+1-555-539-4470,,Not verified,active,2026-05-11T12:00:00Z,1
+HCP-001065,David Smith,David,Smith,Neurology,AFF-HCP-001065,Seattle,WA,david.smith76@example.com,+1-555-331-9510,,Not verified,active,2026-01-01T13:00:00Z,1
+HCP-001066,Jennifer Nguyen,Jennifer,Nguyen,Internal Medicine,AFF-HCP-001066,Tampa,FL,jennifer.nguyen18@example.com,+1-555-353-5537,,Not verified,active,2026-04-18T17:00:00Z,1
+HCP-001067,Linda Sanchez,Linda,Sanchez,Rheumatology,AFF-HCP-001067,Princeton,NJ,linda.sanchez90@example.com,+1-555-511-2350,,Not verified,active,2026-09-20T10:00:00Z,1
+HCP-001068,Richard Young,Richard,Young,Hematology,AFF-HCP-001068,Princeton,NJ,richard.young48@example.com,+1-555-229-5403,,Not verified,active,2026-01-11T14:00:00Z,1
+HCP-001069,Anthony Martinez,Anthony,Martinez,Endocrinology,AFF-HCP-001069,Worcester,MA,anthony.martinez95@example.com,+1-555-771-7870,,Not verified,active,2026-06-08T14:00:00Z,1
+HCP-001070,Christopher Torres,Christopher,Torres,Rheumatology,AFF-HCP-001070,Cleveland,OH,christopher.torres48@example.com,+1-555-705-9083,,Not verified,active,2026-09-25T11:00:00Z,1
+HCP-001071,Mark White,Mark,White,Pulmonology,AFF-HCP-001071,Rochester,NY,mark.white65@example.com,+1-555-236-7461,,Not verified,active,2026-01-14T18:00:00Z,1
+HCP-001072,Kimberly Thomas,Kimberly,Thomas,Cardiology,AFF-HCP-001072,Seattle,WA,kimberly.thomas16@example.com,+1-555-112-2010,,Not verified,active,2026-03-07T14:00:00Z,1
+HCP-001073,Mark Gonzalez,Mark,Gonzalez,Neurology,AFF-HCP-001073,Newark,NJ,mark.gonzalez92@example.com,+1-555-467-8859,,Not verified,active,2026-08-12T17:00:00Z,1
+HCP-001074,Barbara Lopez,Barbara,Lopez,Neurology,AFF-HCP-001074,Columbus,OH,barbara.lopez90@example.com,+1-555-467-1462,,Not verified,active,2026-03-19T11:00:00Z,1
+HCP-001075,Elizabeth Davis,Elizabeth,Davis,Hematology,AFF-HCP-001075,Buffalo,NY,elizabeth.davis85@example.com,+1-555-505-2655,,Not verified,active,2026-05-11T10:00:00Z,1
+HCP-001076,Donna Anderson,Donna,Anderson,Cardiology,AFF-HCP-001076,Seattle,WA,donna.anderson96@example.com,+1-555-179-4899,,Not verified,active,2026-06-06T18:00:00Z,1
+HCP-001077,Joshua Anderson,Joshua,Anderson,Endocrinology,AFF-HCP-001077,Seattle,WA,joshua.anderson38@example.com,+1-555-120-6221,,Not verified,active,2026-02-03T13:00:00Z,1
+HCP-001078,Christopher Martin,Christopher,Martin,Neurology,AFF-HCP-001078,New York,NY,christopher.martin74@example.com,+1-555-662-9043,,Not verified,active,2026-01-12T08:00:00Z,1
+HCP-001079,Steven Torres,Steven,Torres,Neurology,AFF-HCP-001079,Tacoma,WA,steven.torres51@example.com,+1-555-974-1568,,Not verified,active,2026-09-26T17:00:00Z,1
+HCP-001080,Dorothy Clark,Dorothy,Clark,Cardiology,AFF-HCP-001080,Philadelphia,PA,dorothy.clark73@example.com,+1-555-702-2641,,Not verified,active,2026-02-26T12:00:00Z,1
+HCP-001081,Lisa Brown,Lisa,Brown,Endocrinology,AFF-HCP-001081,Buffalo,NY,lisa.brown65@example.com,+1-555-513-3222,,Not verified,active,2026-01-06T11:00:00Z,1
+HCP-001082,Maria Smith,Maria,Smith,Pulmonology,AFF-HCP-001082,San Diego,CA,maria.smith77@example.com,+1-555-920-1138,,Not verified,active,2026-05-20T12:00:00Z,1
+HCP-001083,William Johnson,William,Johnson,Pulmonology,AFF-HCP-001083,Dallas,TX,william.johnson52@example.com,+1-555-497-1578,,Not verified,active,2026-06-24T11:00:00Z,1
+HCP-001084,Paul Davis,Paul,Davis,Internal Medicine,AFF-HCP-001084,Princeton,NJ,paul.davis7@example.com,+1-555-991-3470,,Not verified,active,2026-04-11T14:00:00Z,1
+HCP-001085,Margaret Walker,Margaret,Walker,Internal Medicine,AFF-HCP-001085,Boston,MA,margaret.walker26@example.com,+1-555-848-7112,,Not verified,active,2026-06-25T16:00:00Z,1
+HCP-001086,Betty Johnson,Betty,Johnson,Neurology,AFF-HCP-001086,Chicago,IL,betty.johnson94@example.com,+1-555-122-9267,,Not verified,active,2026-02-12T18:00:00Z,1
+HCP-001087,Dorothy Moore,Dorothy,Moore,Endocrinology,AFF-HCP-001087,Philadelphia,PA,dorothy.moore93@example.com,+1-555-732-2928,,Not verified,active,2026-02-26T09:00:00Z,1
+HCP-001088,Christopher Taylor,Christopher,Taylor,Pulmonology,AFF-HCP-001088,Boston,MA,christopher.taylor6@example.com,+1-555-972-5760,,Not verified,active,2026-06-14T09:00:00Z,1
+HCP-001089,Steven Torres,Steven,Torres,Pulmonology,AFF-HCP-001089,San Diego,CA,steven.torres46@example.com,+1-555-726-1472,,Not verified,active,2026-08-16T09:00:00Z,1
+HCP-001090,Anthony Martinez,Anthony,Martinez,Oncology,AFF-HCP-001090,Worcester,MA,anthony.martinez65@example.com,+1-555-969-8688,,Not verified,active,2026-03-03T15:00:00Z,1
+HCP-001091,Thomas Smith,Thomas,Smith,Hematology,AFF-HCP-001091,Tampa,FL,thomas.smith67@example.com,+1-555-482-2741,,Not verified,active,2026-03-16T10:00:00Z,1
+HCP-001092,James King,James,King,Oncology,AFF-HCP-001092,Princeton,NJ,james.king62@example.com,+1-555-620-3903,,Not verified,active,2026-03-04T14:00:00Z,1
+HCP-001093,Andrew Jackson,Andrew,Jackson,Internal Medicine,AFF-HCP-001093,Worcester,MA,andrew.jackson4@example.com,+1-555-490-3381,,Not verified,active,2026-01-07T12:00:00Z,1
+HCP-001094,Donald Anderson,Donald,Anderson,Hematology,AFF-HCP-001094,Cleveland,OH,donald.anderson25@example.com,+1-555-401-8353,,Not verified,active,2026-02-06T10:00:00Z,1
+HCP-001095,Lisa Jackson,Lisa,Jackson,Neurology,AFF-HCP-001095,Columbus,OH,lisa.jackson97@example.com,+1-555-764-1144,,Not verified,active,2026-06-15T11:00:00Z,1
+HCP-001096,Nancy Williams,Nancy,Williams,Cardiology,AFF-HCP-001096,New York,NY,nancy.williams33@example.com,+1-555-671-2154,,Not verified,active,2026-05-14T14:00:00Z,1
+HCP-001097,Maria Walker,Maria,Walker,Endocrinology,AFF-HCP-001097,Newark,NJ,maria.walker96@example.com,+1-555-500-9941,,Not verified,active,2026-03-10T18:00:00Z,1
+HCP-001098,Kimberly Robinson,Kimberly,Robinson,Cardiology,AFF-HCP-001098,Austin,TX,kimberly.robinson33@example.com,+1-555-200-4234,,Not verified,active,2026-06-12T10:00:00Z,1
+HCP-001099,Patricia Moore,Patricia,Moore,Endocrinology,AFF-HCP-001099,Newark,NJ,patricia.moore94@example.com,+1-555-741-2252,,Not verified,active,2026-01-28T16:00:00Z,1
+HCP-001100,Joshua Torres,Joshua,Torres,Endocrinology,AFF-HCP-001100,Tacoma,WA,joshua.torres29@example.com,+1-555-879-8989,,Not verified,active,2026-02-09T13:00:00Z,1
+HCP-001101,Thomas Jones,Thomas,Jones,Rheumatology,AFF-HCP-001101,Chicago,IL,thomas.jones21@example.com,+1-555-470-2938,,Not verified,active,2026-07-26T13:00:00Z,1
+HCP-001102,Steven Walker,Steven,Walker,Endocrinology,AFF-HCP-001102,Evanston,IL,steven.walker19@example.com,+1-555-913-3979,,Not verified,active,2026-05-06T18:00:00Z,1
+HCP-001103,Charles Walker,Charles,Walker,Neurology,AFF-HCP-001103,Buffalo,NY,charles.walker70@example.com,+1-555-518-5223,,Not verified,active,2026-01-23T08:00:00Z,1
+HCP-001104,Betty Rodriguez,Betty,Rodriguez,Cardiology,AFF-HCP-001104,Evanston,IL,betty.rodriguez21@example.com,+1-555-202-4513,,Not verified,active,2026-07-26T13:00:00Z,1
+HCP-001105,Dorothy Jackson,Dorothy,Jackson,Neurology,AFF-HCP-001105,Worcester,MA,dorothy.jackson67@example.com,+1-555-815-4795,,Not verified,active,2026-01-12T11:00:00Z,1
+HCP-001106,Sandra Robinson,Sandra,Robinson,Oncology,AFF-HCP-001106,Seattle,WA,sandra.robinson9@example.com,+1-555-491-4610,,Not verified,active,2026-06-14T13:00:00Z,1
+HCP-001107,Andrew Williams,Andrew,Williams,Pulmonology,AFF-HCP-001107,Tampa,FL,andrew.williams74@example.com,+1-555-989-5501,,Not verified,active,2026-03-25T16:00:00Z,1
+HCP-001108,Anthony Gonzalez,Anthony,Gonzalez,Endocrinology,AFF-HCP-001108,Los Angeles,CA,anthony.gonzalez23@example.com,+1-555-531-9185,,Not verified,active,2026-09-18T13:00:00Z,1
+HCP-001109,Kenneth Gonzalez,Kenneth,Gonzalez,Endocrinology,AFF-HCP-001109,Dallas,TX,kenneth.gonzalez87@example.com,+1-555-622-8987,,Not verified,active,2026-02-13T17:00:00Z,1

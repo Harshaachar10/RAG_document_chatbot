@@ -1,0 +1,10 @@
+audit_id,doctor_id,review_id,action,actor_label,summary,occurred_at,is_seeded
+AUD-00001,HCP-000123,,preferred_name_approved,Demo Steward,Approved preferred name Sarah Lee-Kim from DOC-003,2026-08-11T10:00:00Z,true
+AUD-00002,HCP-001009,REV-00007,review_completed,Demo Steward,Seeded completed decision for REV-00007,2026-06-04T10:00:00Z,true
+AUD-00003,HCP-001063,REV-00009,review_completed,Demo Steward,Seeded completed decision for REV-00009,2026-07-21T10:00:00Z,true
+AUD-00004,HCP-001083,REV-00015,review_deferred,Demo Steward,Seeded deferred case REV-00015,2026-08-14T15:00:00Z,true
+AUD-00005,HCP-001046,REV-00016,review_deferred,Demo Steward,Seeded deferred case REV-00016,2026-06-25T15:00:00Z,true
+AUD-00006,HCP-001050,REV-00021,review_deferred,Demo Steward,Seeded deferred case REV-00021,2026-06-28T15:00:00Z,true
+AUD-00007,HCP-001067,REV-00027,review_completed,Demo Steward,Seeded completed decision for REV-00027,2026-07-14T10:00:00Z,true
+AUD-00008,HCP-000501,REV-00032,review_deferred,Demo Steward,Seeded deferred case REV-00032,2026-08-13T15:00:00Z,true
+AUD-00009,HCP-001089,REV-00033,review_completed,Demo Steward,Seeded completed decision for REV-00033,2026-06-15T10:00:00Z,true

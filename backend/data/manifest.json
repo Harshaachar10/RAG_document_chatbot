@@ -1,0 +1,32 @@
+{
+  "seed_version": "1.0.0",
+  "demonstration_mode": true,
+  "analysis_mode": "mock",
+  "generated_at": "2026-09-12T12:00:00Z",
+  "counts": {
+    "doctors": 120,
+    "source_records": 500,
+    "reviews": 43,
+    "documents": 12,
+    "evidence": 125,
+    "events": 153
+  },
+  "date_range": {
+    "start": "2024-02-12",
+    "end": "2026-09-12"
+  },
+  "showcase_ids": {
+    "sarah": "HCP-000123",
+    "priya_a": "HCP-000201",
+    "priya_b": "HCP-000202",
+    "chen_jr": "HCP-000301",
+    "chen_sr": "HCP-000302",
+    "dual_affiliation": "HCP-000401",
+    "misspelling": "HCP-000501",
+    "unknown_effective": "HCP-000601",
+    "low_evidence": "HCP-000701",
+    "linkable": "HCP-000801",
+    "sarah_affiliation_review": "REV-SARAH-AFF",
+    "link_review": "REV-LINK-UNASSIGNED"
+  }
+}

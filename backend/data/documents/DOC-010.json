@@ -1,0 +1,43 @@
+{
+  "document_id": "DOC-010",
+  "title": "Jonathan Brooks Speaker Badge",
+  "document_type": "event_registration",
+  "source_id": "SRC-SPEAKER",
+  "version": "1",
+  "document_date": "2026-06-01",
+  "submitted_at": "2026-06-01T12:00:00Z",
+  "submitted_by": "Demo Generator",
+  "submitted_to": "Medical Affairs",
+  "pages": [
+    {
+      "page_number": 1,
+      "label": "Page 1",
+      "blocks": [
+        {
+          "block_id": "p1-b1",
+          "kind": "heading",
+          "text": "JONATHAN BROOKS SPEAKER BADGE",
+          "highlightable": true
+        },
+        {
+          "block_id": "p1-b2",
+          "kind": "paragraph",
+          "text": "Synthetic document for demonstration (DOC-010)",
+          "highlightable": true
+        },
+        {
+          "block_id": "p1-b3",
+          "kind": "paragraph",
+          "text": "Jonathon Brooks \u2014 jonathan.brooks@example.com",
+          "highlightable": true
+        },
+        {
+          "block_id": "p1-b4",
+          "kind": "paragraph",
+          "text": "Credential: TX-DEMO-5501",
+          "highlightable": true
+        }
+      ]
+    }
+  ]
+}

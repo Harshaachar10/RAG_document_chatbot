@@ -1,0 +1,269 @@
+{
+  "REC-SARAH-AFF": {
+    "recommendation_id": "REC-SARAH-AFF",
+    "doctor_id": "HCP-000123",
+    "summary": "Practice-change form documents a new Lakeshore affiliation effective 2026-09-01 while Oakridge remains observed without cessation evidence.",
+    "simulated_recommendation": "Approve affiliation update; retain Oakridge as historical observation until cessation evidence exists.",
+    "demo_match_score": 0.96,
+    "decision_method": "steward_review",
+    "ambiguities": [
+      "No explicit end date for Oakridge Oncology"
+    ],
+    "constraints": [
+      "Do not invent affiliation end dates"
+    ],
+    "evidence_refs": [
+      "EVD-SARAH-06",
+      "EVD-SARAH-05"
+    ],
+    "side_by_side": [
+      {
+        "label": "Current known",
+        "affiliation": "Oakridge Oncology",
+        "name": "Sarah Lee-Kim"
+      },
+      {
+        "label": "Proposed",
+        "affiliation": "Lakeshore Cancer Institute",
+        "name": "Sarah Lee-Kim",
+        "effective_from": "2026-09-01"
+      }
+    ],
+    "evidence_rows": [
+      {
+        "observation": "New affiliation statement",
+        "supports": true,
+        "explanation": "Form explicitly states Lakeshore effective Sept 1, 2026",
+        "citation": "EVD-SARAH-06"
+      },
+      {
+        "observation": "Oakridge cessation",
+        "supports": false,
+        "explanation": "No cessation language present",
+        "citation": "EVD-SARAH-06"
+      }
+    ]
+  },
+  "HCP-000123": {
+    "recommendation_id": "REC-SARAH-MATCH",
+    "doctor_id": "HCP-000123",
+    "summary": "Multiple identity entries share credential MA-DEMO-7421 and professional email across name variations Sarah Lee / S. Lee / Sarah Lee-Kim.",
+    "simulated_recommendation": "Treat records as one doctor identity; keep supporting invoice as transaction, not a duplicate profile.",
+    "demo_match_score": 0.95,
+    "decision_method": "precomputed_demo",
+    "review_status": "partially_reviewed",
+    "ambiguities": [
+      "Abbreviation S. Lee alone would be weak without email corroboration"
+    ],
+    "constraints": [
+      "Official NPI not verified in this demo"
+    ],
+    "side_by_side": [
+      {
+        "source": "SRC-PAY",
+        "name": "Dr. Sarah Lee",
+        "credentials": "MA-DEMO-7421",
+        "specialty": "Oncology",
+        "email": "sarah.lee-kim@example.com",
+        "practice": "Oakridge Oncology",
+        "observed_date": "2024-02-12"
+      },
+      {
+        "source": "SRC-SPEAKER",
+        "name": "S. Lee",
+        "credentials": "MA-DEMO-7421",
+        "specialty": "Oncology",
+        "email": "sarah.lee-kim@example.com",
+        "practice": "Oakridge",
+        "observed_date": "2025-06-18"
+      },
+      {
+        "source": "SRC-CRED",
+        "name": "Dr. Sarah Lee-Kim",
+        "credentials": "MA-DEMO-7421",
+        "specialty": "Oncology",
+        "email": "sarah.lee-kim@example.com",
+        "practice": "Oakridge Oncology",
+        "observed_date": "2026-08-10"
+      }
+    ],
+    "evidence_rows": [
+      {
+        "observation": "Shared credential",
+        "supports": true,
+        "explanation": "MA-DEMO-7421 appears across invoice and credential form",
+        "citation": "EVD-SARAH-02"
+      },
+      {
+        "observation": "Documented name change",
+        "supports": true,
+        "explanation": "Dr. Sarah Lee-Kim, formerly Dr. Sarah Lee",
+        "citation": "EVD-SARAH-05"
+      }
+    ]
+  },
+  "REC-PRIYA-AMB": {
+    "recommendation_id": "REC-PRIYA-AMB",
+    "summary": "Name-only note lacks credential, email, and location corroboration.",
+    "simulated_recommendation": "Leave unresolved pending additional evidence; do not auto-assign.",
+    "demo_match_score": 0.35,
+    "decision_method": "steward_review",
+    "ambiguities": [
+      "Two distinct Priya Sharma masters already exist"
+    ],
+    "constraints": [
+      "Name alone is insufficient for linkage"
+    ],
+    "evidence_refs": [],
+    "side_by_side": [],
+    "evidence_rows": []
+  },
+  "REC-CHEN-CONFLICT": {
+    "recommendation_id": "REC-CHEN-CONFLICT",
+    "summary": "Hard conflict: Jr and Sr profiles share name stem without disambiguating credential on the new record.",
+    "simulated_recommendation": "Leave unresolved; do not override hard identity conflict.",
+    "demo_match_score": 0.55,
+    "decision_method": "constraint_rule",
+    "ambiguities": [
+      "Missing Jr/Sr suffix on inbound record"
+    ],
+    "constraints": [
+      "Hard identity conflicts cannot be auto-linked or overridden via generic merge"
+    ],
+    "evidence_refs": [],
+    "side_by_side": [],
+    "evidence_rows": []
+  },
+  "REC-LOW-EVID": {
+    "recommendation_id": "REC-LOW-EVID",
+    "summary": "Abbreviation and city only; no email or credential.",
+    "simulated_recommendation": "Leave unresolved until stronger corroboration is available.",
+    "demo_match_score": 0.48,
+    "decision_method": "steward_review",
+    "ambiguities": [
+      "Common surname abbreviation"
+    ],
+    "constraints": [],
+    "evidence_refs": [],
+    "side_by_side": [],
+    "evidence_rows": []
+  },
+  "REC-LINK-UNASSIGNED": {
+    "recommendation_id": "REC-LINK-UNASSIGNED",
+    "summary": "Unassigned identity entry matches email and credential for Diana Patel.",
+    "simulated_recommendation": "Link records to existing master HCP-000801.",
+    "demo_match_score": 0.92,
+    "decision_method": "steward_review",
+    "ambiguities": [],
+    "constraints": [
+      "Link applies unassigned source record to existing master; no master-master merge"
+    ],
+    "evidence_refs": [],
+    "side_by_side": [],
+    "evidence_rows": []
+  },
+  "HCP-000201": {
+    "recommendation_id": "REC-HCP-000201",
+    "doctor_id": "HCP-000201",
+    "summary": "Precomputed simulated match explanation for HCP-000201.",
+    "simulated_recommendation": "Maintain current linkage based on prepared demo evidence.",
+    "demo_match_score": 0.9,
+    "decision_method": "precomputed_demo",
+    "review_status": "accepted",
+    "ambiguities": [],
+    "constraints": [],
+    "side_by_side": [],
+    "evidence_rows": []
+  },
+  "HCP-000202": {
+    "recommendation_id": "REC-HCP-000202",
+    "doctor_id": "HCP-000202",
+    "summary": "Precomputed simulated match explanation for HCP-000202.",
+    "simulated_recommendation": "Maintain current linkage based on prepared demo evidence.",
+    "demo_match_score": 0.9,
+    "decision_method": "precomputed_demo",
+    "review_status": "accepted",
+    "ambiguities": [],
+    "constraints": [],
+    "side_by_side": [],
+    "evidence_rows": []
+  },
+  "HCP-000301": {
+    "recommendation_id": "REC-HCP-000301",
+    "doctor_id": "HCP-000301",
+    "summary": "Precomputed simulated match explanation for HCP-000301.",
+    "simulated_recommendation": "Maintain current linkage based on prepared demo evidence.",
+    "demo_match_score": 0.9,
+    "decision_method": "precomputed_demo",
+    "review_status": "accepted",
+    "ambiguities": [],
+    "constraints": [],
+    "side_by_side": [],
+    "evidence_rows": []
+  },
+  "HCP-000401": {
+    "recommendation_id": "REC-HCP-000401",
+    "doctor_id": "HCP-000401",
+    "summary": "Precomputed simulated match explanation for HCP-000401.",
+    "simulated_recommendation": "Maintain current linkage based on prepared demo evidence.",
+    "demo_match_score": 0.9,
+    "decision_method": "precomputed_demo",
+    "review_status": "accepted",
+    "ambiguities": [],
+    "constraints": [],
+    "side_by_side": [],
+    "evidence_rows": []
+  },
+  "HCP-000501": {
+    "recommendation_id": "REC-HCP-000501",
+    "doctor_id": "HCP-000501",
+    "summary": "Precomputed simulated match explanation for HCP-000501.",
+    "simulated_recommendation": "Maintain current linkage based on prepared demo evidence.",
+    "demo_match_score": 0.9,
+    "decision_method": "precomputed_demo",
+    "review_status": "accepted",
+    "ambiguities": [],
+    "constraints": [],
+    "side_by_side": [],
+    "evidence_rows": []
+  },
+  "HCP-000601": {
+    "recommendation_id": "REC-HCP-000601",
+    "doctor_id": "HCP-000601",
+    "summary": "Precomputed simulated match explanation for HCP-000601.",
+    "simulated_recommendation": "Maintain current linkage based on prepared demo evidence.",
+    "demo_match_score": 0.9,
+    "decision_method": "precomputed_demo",
+    "review_status": "accepted",
+    "ambiguities": [],
+    "constraints": [],
+    "side_by_side": [],
+    "evidence_rows": []
+  },
+  "HCP-000701": {
+    "recommendation_id": "REC-HCP-000701",
+    "doctor_id": "HCP-000701",
+    "summary": "Precomputed simulated match explanation for HCP-000701.",
+    "simulated_recommendation": "Maintain current linkage based on prepared demo evidence.",
+    "demo_match_score": 0.9,
+    "decision_method": "precomputed_demo",
+    "review_status": "accepted",
+    "ambiguities": [],
+    "constraints": [],
+    "side_by_side": [],
+    "evidence_rows": []
+  },
+  "HCP-000801": {
+    "recommendation_id": "REC-HCP-000801",
+    "doctor_id": "HCP-000801",
+    "summary": "Precomputed simulated match explanation for HCP-000801.",
+    "simulated_recommendation": "Maintain current linkage based on prepared demo evidence.",
+    "demo_match_score": 0.9,
+    "decision_method": "precomputed_demo",
+    "review_status": "accepted",
+    "ambiguities": [],
+    "constraints": [],
+    "side_by_side": [],
+    "evidence_rows": []
+  }
+}

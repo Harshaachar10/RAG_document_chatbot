@@ -1,0 +1,3 @@
+﻿change_id,source_record_id,doctor_id,state,valid_from,valid_to,reason
+CHG-035-OLD,REC-00635,HCP-000124,superseded,2026-10-01T10:00:00Z,2026-11-03T10:00:00Z,Earlier incorrect assignment
+CHG-035-NEW,REC-00635,HCP-000125,current,2026-11-03T10:00:00Z,,Credential and invoice evidence support corrected identity

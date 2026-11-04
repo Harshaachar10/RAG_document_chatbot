@@ -1,0 +1,7 @@
+﻿constraint_id,left_doctor_id,right_doctor_id,constraint_type,basis,left_record_id,right_record_id
+CNL-014,HCP-000126,HCP-000127,cannot_link,Distinct fictional individual credentials in reference source rows,REC-00020,REC-00025
+CNL-015,HCP-000124,HCP-000125,cannot_link,Distinct fictional individual credentials in reference source rows,REC-00010,REC-00015
+CNL-016,HCP-000126,HCP-000127,cannot_link,Distinct fictional individual credentials in reference source rows,REC-00020,REC-00025
+CNL-017,HCP-000128,HCP-000129,cannot_link,Distinct fictional individual credentials in reference source rows,REC-00030,REC-00035
+CNL-018,HCP-000126,HCP-000127,cannot_link,Distinct fictional individual credentials in reference source rows,REC-00020,REC-00025
+CNL-020,HCP-000124,HCP-000125,cannot_link,Distinct fictional individual credentials in reference source rows,REC-00010,REC-00015

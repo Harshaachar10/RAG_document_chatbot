@@ -1,0 +1,7 @@
+source_id,source_name,source_type,description,snapshot_version,updated_at
+SRC-CRM,CRM Directory,crm_directory,Commercial CRM HCP directory extract,2026.09.01,2026-09-01T12:00:00Z
+SRC-SPEAKER,Speaker & Event Registrations,speaker_events,Speaker bureau and event registration feeds,2026.09.10,2026-09-10T15:30:00Z
+SRC-PAY,Payments & Invoices,payments_invoices,Speaker and consulting payment invoices,2026.09.05,2026-09-05T09:00:00Z
+SRC-RX,Prescriber Activity,prescriber_activity,Doctor-only aggregate prescribing activity,2026.08.31,2026-08-31T18:00:00Z
+SRC-CRED,Credential & Practice Forms,credential_forms,Credential updates and practice-change forms,2026.09.12,2026-09-12T11:20:00Z
+SRC-NOTES,Medical & Rep Notes,rep_notes,Field notes without patient information,2026.09.08,2026-09-08T14:45:00Z

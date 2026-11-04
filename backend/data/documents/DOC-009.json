@@ -1,0 +1,43 @@
+{
+  "document_id": "DOC-009",
+  "title": "Elena Vargas Dual Affiliation Memo",
+  "document_type": "rep_note",
+  "source_id": "SRC-NOTES",
+  "version": "1",
+  "document_date": "2026-06-01",
+  "submitted_at": "2026-06-01T12:00:00Z",
+  "submitted_by": "Demo Generator",
+  "submitted_to": "Medical Affairs",
+  "pages": [
+    {
+      "page_number": 1,
+      "label": "Page 1",
+      "blocks": [
+        {
+          "block_id": "p1-b1",
+          "kind": "heading",
+          "text": "ELENA VARGAS DUAL AFFILIATION MEMO",
+          "highlightable": true
+        },
+        {
+          "block_id": "p1-b2",
+          "kind": "paragraph",
+          "text": "Synthetic document for demonstration (DOC-009)",
+          "highlightable": true
+        },
+        {
+          "block_id": "p1-b3",
+          "kind": "paragraph",
+          "text": "Elena Vargas maintains concurrent affiliations",
+          "highlightable": true
+        },
+        {
+          "block_id": "p1-b4",
+          "kind": "paragraph",
+          "text": "Credential: PA-DEMO-4401",
+          "highlightable": true
+        }
+      ]
+    }
+  ]
+}

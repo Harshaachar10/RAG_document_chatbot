@@ -1,0 +1,13 @@
+document_id,title,document_type,source_id,version,document_date,submitted_at,submitted_by,submitted_to,content_file
+DOC-001,Speaker Invoice — Sarah Lee,invoice,SRC-PAY,1,2024-02-12,2024-02-12T10:00:00Z,Speaker Bureau Ops,Finance,DOC-001.json
+DOC-002,Event Registration — S. Lee,event_registration,SRC-SPEAKER,1,2025-06-18,2025-06-18T14:22:00Z,Event Portal,Medical Affairs,DOC-002.json
+DOC-003,Credential Update — Lee-Kim,credential_update,SRC-CRED,1,2026-08-10,2026-08-10T09:15:00Z,Dr. Sarah Lee-Kim,Credentialing Office,DOC-003.json
+DOC-004,Practice Change Form — Lakeshore,practice_change,SRC-CRED,1,2026-09-02,2026-09-02T11:40:00Z,Dr. Sarah Lee-Kim,Provider Relations,DOC-004.json
+DOC-005,Priya Sharma Cardiology CRM Snapshot,directory_extract,SRC-CRM,1,2026-06-01,2026-06-01T12:00:00Z,Demo Generator,Medical Affairs,DOC-005.json
+DOC-006,Priya Sharma Endocrinology Registration,event_registration,SRC-SPEAKER,1,2026-06-01,2026-06-01T12:00:00Z,Demo Generator,Medical Affairs,DOC-006.json
+DOC-007,Robert Chen Jr Credential,credential_update,SRC-CRED,1,2026-06-01,2026-06-01T12:00:00Z,Demo Generator,Medical Affairs,DOC-007.json
+DOC-008,Robert Chen Sr Credential,credential_update,SRC-CRED,1,2026-06-01,2026-06-01T12:00:00Z,Demo Generator,Medical Affairs,DOC-008.json
+DOC-009,Elena Vargas Dual Affiliation Memo,rep_note,SRC-NOTES,1,2026-06-01,2026-06-01T12:00:00Z,Demo Generator,Medical Affairs,DOC-009.json
+DOC-010,Jonathan Brooks Speaker Badge,event_registration,SRC-SPEAKER,1,2026-06-01,2026-06-01T12:00:00Z,Demo Generator,Medical Affairs,DOC-010.json
+DOC-011,Amelia Grant Field Note,rep_note,SRC-NOTES,1,2026-06-01,2026-06-01T12:00:00Z,Demo Generator,Medical Affairs,DOC-011.json
+DOC-012,Diana Patel Speaker Registration,event_registration,SRC-SPEAKER,1,2026-06-01,2026-06-01T12:00:00Z,Demo Generator,Medical Affairs,DOC-012.json

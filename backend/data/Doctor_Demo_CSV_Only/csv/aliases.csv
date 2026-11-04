@@ -1,0 +1,7 @@
+﻿alias_id,doctor_id,name,alias_type,observation_date,evidence_id
+ALS-001,HCP-000123,Sarah Lee,previous_name,2024-02-12,EVD-01081
+ALS-002,HCP-000123,S. Lee-Kim,abbreviation,2026-10-15,EVD-01082
+ALS-003,HCP-000123,Sara Lee-Kim,spelling_variant,2026-10-15,EVD-01083
+ALS-004,HCP-000130,Bill Carter,nickname,2026-10-15,EVD-01084
+ALS-005,HCP-000123,"LEE-KIM, SARAH, MD",format_variant,2026-10-15,EVD-01085
+ALS-006,HCP-000131,Sarah Ellis,format_variant,2026-10-15,EVD-01086

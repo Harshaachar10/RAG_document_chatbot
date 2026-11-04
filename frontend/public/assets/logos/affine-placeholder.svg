@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 40" role="img" aria-label="Affine Analytics">
+  <rect width="180" height="40" rx="4" fill="#10283F"/>
+  <circle cx="18" cy="20" r="8" fill="#2E86C1"/>
+  <path d="M14 20h8M18 16v8" stroke="#F8FAFC" stroke-width="1.5"/>
+  <text x="34" y="25" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#F8FAFC">Affine Analytics</text>
+</svg>

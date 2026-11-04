@@ -1,0 +1,23 @@
+﻿audit_id,doctor_id,review_id,action,actor_label,summary,occurred_at,is_seeded
+AUD-001,HCP-000123,REV-001,approved,Demo Data Steward,Explicit prior-name statement plus matching credential,2026-11-03T10:00:00Z,true
+AUD-002,HCP-000123,REV-002,approved,Demo Data Steward,Individual email corroborates abbreviation,2026-11-03T10:00:00Z,true
+AUD-003,HCP-000123,REV-003,approved,Demo Data Steward,Matching individual credential and email,2026-11-03T10:00:00Z,true
+AUD-004,HCP-000130,REV-004,approved,Demo Data Steward,Credential supports nickname interpretation,2026-11-03T10:00:00Z,true
+AUD-005,HCP-000123,REV-005,approved,Demo Data Steward,"Normalize order, case, title and credentials",2026-11-03T10:00:00Z,true
+AUD-006,HCP-000131,REV-006,approved,Demo Data Steward,Email and credential support missing middle name,2026-11-03T10:00:00Z,true
+AUD-007,HCP-000123,REV-007,approved,Demo Data Steward,"Separate source IDs, same corroborated identity",2026-11-03T10:00:00Z,true
+AUD-008,HCP-000123,REV-008,approved,Demo Data Steward,Associate existing synthetic reference after identity matching,2026-11-03T10:00:00Z,true
+AUD-009,HCP-000131,REV-009,approved,Demo Data Steward,Internal doctor ID remains usable; official NPI stays null,2026-11-03T10:00:00Z,true
+AUD-014,HCP-000126,REV-014,rejected,Demo Data Steward,Distinct synthetic reference identities and credentials,2026-11-03T10:00:00Z,true
+AUD-015,HCP-000124,REV-015,rejected,Demo Data Steward,Distinct credentials plus location and specialty,2026-11-03T10:00:00Z,true
+AUD-016,HCP-000126,REV-016,rejected,Demo Data Steward,Distinct individual credentials despite shared practice,2026-11-03T10:00:00Z,true
+AUD-017,HCP-000128,REV-017,rejected,Demo Data Steward,Suffix plus individual credentials distinguish identities,2026-11-03T10:00:00Z,true
+AUD-018,HCP-000126,REV-018,rejected,Demo Data Steward,Shared contact does not override credential conflict,2026-11-03T10:00:00Z,true
+AUD-022,HCP-000132,REV-022,approved,Demo Data Steward,Explicit concurrent affiliation statement,2026-11-03T10:00:00Z,true
+AUD-023,HCP-000123,REV-023,approved,Demo Data Steward,Formatting difference is not a move,2026-11-03T10:00:00Z,true
+AUD-025,HCP-000123,REV-025,approved,Demo Data Steward,"Compatible specialization, not sufficient by itself",2026-11-03T10:00:00Z,true
+AUD-026,HCP-000123,REV-026,approved,Demo Data Steward,Document date must not be replaced by ingestion date,2026-11-03T10:00:00Z,true
+AUD-029,HCP-000133,REV-029,approved,Demo Data Steward,Combine only supported fields with separate citations,2026-11-03T10:00:00Z,true
+AUD-031,HCP-000123,REV-031,approved,Demo Data Steward,"Transactions are legitimate separate events, not duplicate identities",2026-11-03T10:00:00Z,true
+AUD-032,HCP-000123,REV-032,rejected,Demo Data Steward,Keep ingestion audit but exclude duplicate transaction from sums,2026-11-03T10:00:00Z,true
+AUD-035,HCP-000125,REV-035,correct_link,Demo Data Steward,Current corrected link and superseded decision remain auditable,2026-11-03T10:00:00Z,true
