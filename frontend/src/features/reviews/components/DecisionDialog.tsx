@@ -29,7 +29,7 @@ export function DecisionDialog({
       open={open}
       onOpenChange={onOpenChange}
       title={confirming ? 'Confirm decision' : 'Submit review decision'}
-      description="Demo steward decisions persist in local runtime state. A reason is required for final decisions."
+      description="Steward decisions persist in local runtime state. A reason is required for final decisions."
       footer={
         confirming ? (
           <>

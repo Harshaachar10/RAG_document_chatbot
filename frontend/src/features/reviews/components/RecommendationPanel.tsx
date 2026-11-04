@@ -9,7 +9,7 @@ export function RecommendationPanel({ recommendation }: { recommendation: Record
         {displayValue(recommendation.summary || recommendation.simulated_recommendation)}
       </p>
       {recommendation.demo_match_score !== undefined && recommendation.demo_match_score !== null ? (
-        <p className="mt-2 text-xs text-sky-900">Demo match score: {String(recommendation.demo_match_score)}</p>
+        <p className="mt-2 text-xs text-sky-900">Match score: {String(recommendation.demo_match_score)}</p>
       ) : null}
     </section>
   );

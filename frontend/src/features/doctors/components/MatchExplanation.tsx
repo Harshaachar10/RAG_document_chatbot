@@ -12,7 +12,7 @@ export function MatchExplanation({ data }: { data: Match }) {
           <p className="mt-1 text-sm text-sky-950">{data.simulated_recommendation}</p>
         </div>
         <dl className="mt-3 grid gap-2 text-sm md:grid-cols-3">
-          <div><dt className="text-muted">Demo match score</dt><dd className="font-medium">{data.demo_match_score ?? '—'}</dd></div>
+          <div><dt className="text-muted">Match score</dt><dd className="font-medium">{data.demo_match_score ?? '—'}</dd></div>
           <div><dt className="text-muted">Decision method</dt><dd className="font-medium">{displayValue(data.decision_method)}</dd></div>
           <div><dt className="text-muted">Review status</dt><dd className="font-medium">{displayValue(data.review_status, 'n/a')}</dd></div>
         </dl>

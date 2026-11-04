@@ -5,6 +5,11 @@ export interface Paginated<T> {
   page_size: number;
   applied_filters: Record<string, unknown>;
   snapshot_version: number;
+  trail_summary?: {
+    total_events?: number;
+    issue_events?: number;
+    message?: string;
+  };
 }
 
 export interface ApiErrorBody {
@@ -133,6 +138,11 @@ export interface HistoryEvent {
   date_label?: string | null;
   date_meaning?: string | null;
   source_type?: string | null;
+  source_record_id?: string | null;
+  issue_category?: string | null;
+  issue_label?: string | null;
+  activity_label?: string | null;
+  gaps?: string[];
   actor?: string | null;
   reason?: string | null;
   evidence_quotation?: string | null;

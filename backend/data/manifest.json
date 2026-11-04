@@ -1,19 +1,18 @@
 {
-  "seed_version": "1.0.0",
-  "demonstration_mode": true,
-  "analysis_mode": "mock",
-  "generated_at": "2026-09-12T12:00:00Z",
+  "seed_version": "2.0.0",
+  "demonstration_mode": false,
+  "analysis_mode": "azure",
+  "dataset_directory": "data/Doctor_Demo_CSV_Only/csv",
+  "generated_at": "2026-11-04T00:00:00Z",
   "counts": {
     "doctors": 120,
     "source_records": 500,
     "reviews": 43,
-    "documents": 12,
-    "evidence": 125,
     "events": 153
   },
   "date_range": {
     "start": "2024-02-12",
-    "end": "2026-09-12"
+    "end": "2026-11-03"
   },
   "showcase_ids": {
     "sarah": "HCP-000123",

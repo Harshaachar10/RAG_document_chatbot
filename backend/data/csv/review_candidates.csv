@@ -1,5 +1,0 @@
-review_id,candidate_doctor_id,demo_score,evidence_summary
-REV-PRIYA-AMB,HCP-000201,0.42,Shared name only; different likely specialty context
-REV-PRIYA-AMB,HCP-000202,0.40,Shared name only; Houston vs unknown location
-REV-CHEN-CONFLICT,HCP-000301,0.55,Same city/specialty; missing generational suffix
-REV-CHEN-CONFLICT,HCP-000302,0.54,Same city/specialty; missing generational suffix

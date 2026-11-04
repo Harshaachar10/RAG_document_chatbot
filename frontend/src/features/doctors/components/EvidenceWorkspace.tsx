@@ -88,7 +88,7 @@ export function EvidenceWorkspace({
         <div>
           <h3 className="font-semibold">{doc.title}</h3>
           <p className="text-xs text-muted">
-            {doc.document_type} · {formatDate(doc.document_date)} · v{doc.version} · Synthetic demo document
+            {doc.document_type} · {formatDate(doc.document_date)} · v{doc.version}
           </p>
         </div>
         <a

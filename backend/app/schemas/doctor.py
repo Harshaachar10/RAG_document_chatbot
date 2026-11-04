@@ -119,6 +119,11 @@ class HistoryEvent(BaseModel):
     date_label: Optional[str] = None
     date_meaning: Optional[str] = None
     source_type: Optional[str] = None
+    source_record_id: Optional[str] = None
+    issue_category: Optional[str] = None
+    issue_label: Optional[str] = None
+    activity_label: Optional[str] = None
+    gaps: List[str] = Field(default_factory=list)
     actor: Optional[str] = None
     reason: Optional[str] = None
     evidence_quotation: Optional[str] = None

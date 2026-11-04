@@ -1,3 +1,0 @@
-provenance_id,doctor_id,field_name,selected_value,observation_id,selection_reason,review_id,version
-PRV-000001,HCP-000123,preferred_name,Sarah Lee-Kim,OBS-000001,Approved from credential update form,,2
-PRV-000002,HCP-000123,primary_affiliation,Oakridge Oncology,OBS-000002,Current known affiliation pending Lakeshore review,,1

@@ -1,4 +1,0 @@
-observation_id,doctor_id,source_record_id,field_name,observed_value,effective_from,effective_to,recorded_at,evidence_id
-OBS-000001,HCP-000123,SR-SARAH-CRED,preferred_name,Sarah Lee-Kim,2026-08-10,,2026-08-10T09:15:00Z,EVD-SARAH-05
-OBS-000002,HCP-000123,SR-SARAH-CRM,primary_affiliation,Oakridge Oncology,2020-01-15,,2026-07-01T08:00:00Z,EVD-SARAH-07
-OBS-000003,HCP-000123,SR-SARAH-PRAC,primary_affiliation,Lakeshore Cancer Institute,2026-09-01,,2026-09-02T11:40:00Z,EVD-SARAH-06

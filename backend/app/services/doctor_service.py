@@ -287,22 +287,22 @@ class DoctorService:
     ) -> Dict[str, Any]:
         if not self.repo.get_doctor(doctor_id):
             raise NotFoundError(f"Doctor {doctor_id} not found")
+        from app.services.history_enrichment import enrich_history_items, matches_event_filter
+
         evidence = {e["evidence_id"]: e for e in self.repo.list_evidence()}
         sources = {s["source_id"]: s for s in self.repo.list_sources()}
         records = {r["source_record_id"]: r for r in self.repo.list_source_records()}
-        items = []
-        for event in self.repo.list_events(doctor_id):
-            if event_type and event_type != "all":
-                mapping = {
-                    "names": {"name_variation_observed", "name_change_documented", "name_update"},
-                    "addresses": {"address_update", "address_observed"},
-                    "affiliations": {"affiliation_observed", "affiliation_effective", "affiliation_update"},
-                    "record_entries": {"record_entry"},
-                    "review_decisions": {"review_decision", "preferred_name_approved"},
-                }
-                allowed = mapping.get(event_type)
-                if allowed and event.get("event_type") not in allowed:
-                    continue
+        raw_events = list(self.repo.list_events(doctor_id))
+        items = enrich_history_items(
+            raw_events,
+            evidence_by_id=evidence,
+            records_by_id=records,
+            sources_by_id=sources,
+        )
+        filtered: List[Dict[str, Any]] = []
+        for event in items:
+            if not matches_event_filter(event, event_type):
+                continue
             if field:
                 blob = " ".join([
                     event.get("title") or "",
@@ -310,44 +310,40 @@ class DoctorService:
                     event.get("previous_value") or "",
                     event.get("new_value") or "",
                     event.get("event_type") or "",
+                    event.get("issue_label") or "",
+                    " ".join(event.get("gaps") or []),
                 ]).lower()
                 if field.lower() not in blob and field.lower() not in (event.get("event_type") or "").lower():
-                    # also match affiliation/name fields loosely
                     if field == "preferred_name" and "name" not in (event.get("event_type") or ""):
                         continue
                     if field == "primary_affiliation" and "affiliation" not in (event.get("event_type") or ""):
                         continue
-            evid = evidence.get(event.get("evidence_id") or "")
-            source_type = None
-            if evid and evid.get("source_record_id"):
-                rec = records.get(evid["source_record_id"])
-                if rec:
-                    source_type = sources.get(rec.get("source_id"), {}).get("source_type")
-            date_label = event.get("effective_date") or event.get("document_date") or event.get("recorded_at")
-            if event.get("effective_date"):
-                date_meaning = "effective_date"
-            elif event.get("document_date"):
-                date_meaning = "document_date"
-            else:
-                date_meaning = "recorded_at"
-            items.append({
-                **event,
-                "date_label": date_label,
-                "date_meaning": date_meaning,
-                "source_type": source_type,
-                "actor": None,
-                "reason": event.get("description"),
-                "evidence_quotation": evid.get("quoted_text") if evid else None,
-            })
+                    if field.lower() not in blob:
+                        continue
+            filtered.append(event)
         reverse = (sort_direction or "desc").lower() != "asc"
-        items.sort(key=lambda e: (e.get("date_label") or "", e["event_id"]), reverse=reverse)
+        filtered.sort(key=lambda e: (e.get("date_label") or "", e["event_id"]), reverse=reverse)
+        issue_count = sum(
+            1
+            for e in filtered
+            if (e.get("issue_category") and e.get("issue_category") not in {"activity", "review"})
+            or e.get("gaps")
+        )
         return {
-            "items": items,
-            "total": len(items),
+            "items": filtered,
+            "total": len(filtered),
             "page": 1,
-            "page_size": len(items) or 25,
+            "page_size": len(filtered) or 25,
             "applied_filters": {"doctor_id": doctor_id, "event_type": event_type, "field": field},
             "snapshot_version": self.repo.snapshot_version(),
+            "trail_summary": {
+                "total_events": len(filtered),
+                "issue_events": issue_count,
+                "message": (
+                    f"{len(filtered)} chronological identity events"
+                    + (f", including {issue_count} gaps or changes to backtrack." if issue_count else ".")
+                ),
+            },
         }
 
     def provenance(self, doctor_id: str) -> Dict[str, Any]:
@@ -371,7 +367,7 @@ class DoctorService:
         }
 
     def match_explanation(self, doctor_id: str) -> Dict[str, Any]:
-        """Prepared linkage narrative. This does not call a model and is not an identity validation."""
+        """Deterministic linkage narrative from seed links. Live AI analysis is separate."""
         doctor = self.repo.get_doctor(doctor_id)
         if not doctor:
             raise NotFoundError(f"Doctor {doctor_id} not found")
@@ -381,7 +377,8 @@ class DoctorService:
             if link.get("doctor_id") == doctor_id and is_linked_status(link.get("link_status"))
         ]
         side_by_side = []
-        for link in sorted(links, key=lambda item: item.get("source_record_id") or "")[:6]:
+        evidence_rows = []
+        for link in sorted(links, key=lambda item: item.get("source_record_id") or "")[:8]:
             rec = records.get(link.get("source_record_id") or "")
             if not rec:
                 continue
@@ -389,10 +386,26 @@ class DoctorService:
                 "source_record_id": rec.get("source_record_id"),
                 "recorded_name": rec.get("recorded_name"),
                 "credential_reference": rec.get("credential_reference"),
+                "provider_identifier": rec.get("provider_identifier"),
                 "email": rec.get("email"),
+                "address_line": rec.get("address_line"),
                 "city": rec.get("city"),
                 "state": rec.get("state"),
                 "practice_name": rec.get("practice_name"),
+                "record_date": rec.get("record_date"),
+            })
+            missing_npi = not (rec.get("provider_identifier") or "").strip() or (
+                (rec.get("identifier_kind") or "").lower() in {"missing", "absent", "none"}
+            )
+            evidence_rows.append({
+                "observation": f"{rec.get('recorded_name')} on {rec.get('record_date') or 'unknown date'}",
+                "supports": not missing_npi,
+                "explanation": (
+                    "NPI/provider identifier missing on this source record"
+                    if missing_npi
+                    else f"Linked via {link.get('decision_basis') or link.get('link_status')}"
+                ),
+                "citation": rec.get("source_record_id"),
             })
         constraints = []
         for constraint in self.repo.list_constraints():
@@ -403,22 +416,24 @@ class DoctorService:
             if r.get("doctor_id") == doctor_id and r.get("status") == "pending"
         ]
         summary = (
-            f"Prepared demo linkage for {doctor.get('preferred_name')}. "
-            f"{len(links)} source records are already associated with {doctor_id} in the supplied dataset. "
-            "This view is not an independent AI identity validation."
+            f"{len(links)} source records are linked to {doctor.get('preferred_name')} ({doctor_id}). "
+            "Use Azure AI analysis below to explain whether these observations support one identity."
         )
         return {
             "doctor_id": doctor_id,
-            "label": "Prepared result",
+            "label": "Linked record comparison",
             "summary": summary,
-            "simulated_recommendation": "Prepared result. These links were supplied with the dataset and were not generated by the live model.",
+            "simulated_recommendation": (
+                "Run live AI identity analysis on the linked records to produce a model-backed explanation. "
+                "The side-by-side rows below come from the dataset links, not from the model."
+            ),
             "demo_match_score": None,
-            "decision_method": "prepared_demo",
+            "decision_method": "dataset_links",
             "review_status": "pending" if pending else "clear",
             "ambiguities": pending,
             "constraints": constraints,
             "side_by_side": side_by_side,
-            "evidence_rows": [],
+            "evidence_rows": evidence_rows,
         }
 
     def review_history(self, doctor_id: str) -> Dict[str, Any]:

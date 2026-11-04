@@ -3,7 +3,13 @@ import * as Tabs from '@radix-ui/react-tabs';
 import { Expand, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useMemo, useState } from 'react';
-import { fetchAiAnalyses, fetchProfileSummary, startProfileSummary } from '../../../api/ai';
+import {
+  fetchAiAnalyses,
+  fetchProfileSummary,
+  startChangeExtraction,
+  startIdentityAnalysis,
+  startProfileSummary,
+} from '../../../api/ai';
 import {
   fetchDoctor,
   fetchDoctorHistory,
@@ -197,12 +203,26 @@ export function DoctorProfile({
               <button type="button" className={`rounded-md px-2.5 py-1 text-xs ${historyMode === 'timeline' ? 'bg-primary text-white' : 'bg-slate-100'}`} onClick={() => setHistoryMode('timeline')}>Timeline</button>
               <button type="button" className={`rounded-md px-2.5 py-1 text-xs ${historyMode === 'table' ? 'bg-primary text-white' : 'bg-slate-100'}`} onClick={() => setHistoryMode('table')}>Table</button>
             </div>
+            <HistoryAiPanel
+              recordIds={(recordsQuery.data?.items || []).map((r) => r.source_record_id)}
+              onOpenEvidence={openEvidence}
+            />
             {historyQuery.isLoading ? <Skeleton className="h-40 w-full" /> : null}
             {historyQuery.data ? (
               historyMode === 'timeline' ? (
-                <DoctorTimeline events={historyQuery.data.items} highlightEventId={eventId} onOpenEvidence={openEvidence} />
+                <DoctorTimeline
+                  events={historyQuery.data.items}
+                  highlightEventId={eventId}
+                  onOpenEvidence={openEvidence}
+                  trailSummary={historyQuery.data.trail_summary}
+                />
               ) : (
-                <FieldHistoryTable events={historyQuery.data.items} highlightEventId={eventId} onOpenEvidence={openEvidence} />
+                <FieldHistoryTable
+                  events={historyQuery.data.items}
+                  highlightEventId={eventId}
+                  onOpenEvidence={openEvidence}
+                  trailSummary={historyQuery.data.trail_summary}
+                />
               )
             ) : null}
           </Tabs.Content>
@@ -233,6 +253,10 @@ export function DoctorProfile({
             </div>
           </Tabs.Content>
           <Tabs.Content value="match">
+            <MatchAiPanel
+              recordIds={(recordsQuery.data?.items || []).map((r) => r.source_record_id)}
+              onOpenEvidence={openEvidence}
+            />
             {matchQuery.isLoading ? <Skeleton className="h-40 w-full" /> : null}
             {matchQuery.data ? <MatchExplanation data={matchQuery.data} /> : null}
           </Tabs.Content>
@@ -243,6 +267,118 @@ export function DoctorProfile({
         </div>
       </Tabs.Root>
     </div>
+  );
+}
+
+function HistoryAiPanel({
+  recordIds,
+  onOpenEvidence,
+}: {
+  recordIds: string[];
+  onOpenEvidence: (id: string) => void;
+}) {
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const ai = useAiJob(`history-changes:${recordIds.slice(0, 8).join(',')}`);
+
+  async function generate(forceRefresh: boolean) {
+    if (!recordIds.length) {
+      setError('No linked source records are available for AI trail analysis.');
+      return;
+    }
+    setError(null);
+    setSubmitting(true);
+    try {
+      const job = await startChangeExtraction(recordIds.slice(0, 8), forceRefresh);
+      ai.setJobId(job.job_id);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <section className="mb-4 space-y-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+          disabled={submitting || ai.busy || !recordIds.length}
+          onClick={() => generate(false)}
+        >
+          Analyze identity trail with AI
+        </button>
+        <p className="text-xs text-muted">
+          Azure OpenAI reads the linked documents and calls out address changes, missing NPI, and other gaps across dates.
+        </p>
+      </div>
+      {error ? <ErrorState title="Trail analysis failed" message={error} /> : null}
+      {ai.job ? (
+        <AiResultCard
+          job={ai.job}
+          onOpenEvidence={onOpenEvidence}
+          onRefresh={() => generate(true)}
+          refreshDisabled={submitting || ai.busy}
+        />
+      ) : null}
+    </section>
+  );
+}
+
+function MatchAiPanel({
+  recordIds,
+  onOpenEvidence,
+}: {
+  recordIds: string[];
+  onOpenEvidence: (id: string) => void;
+}) {
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const ai = useAiJob(`match-identity:${recordIds.slice(0, 8).join(',')}`);
+
+  async function generate(forceRefresh: boolean) {
+    if (recordIds.length < 2) {
+      setError('Select or link at least two source records before running AI identity analysis.');
+      return;
+    }
+    setError(null);
+    setSubmitting(true);
+    try {
+      const job = await startIdentityAnalysis(recordIds.slice(0, 8), forceRefresh);
+      ai.setJobId(job.job_id);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <section className="mb-4 space-y-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+          disabled={submitting || ai.busy || recordIds.length < 2}
+          onClick={() => generate(false)}
+        >
+          Run live AI identity analysis
+        </button>
+        <p className="text-xs text-muted">
+          Uses Azure OpenAI on linked records. The comparison table below is the dataset linkage only.
+        </p>
+      </div>
+      {error ? <ErrorState title="Identity analysis failed" message={error} /> : null}
+      {ai.job ? (
+        <AiResultCard
+          job={ai.job}
+          onOpenEvidence={onOpenEvidence}
+          onRefresh={() => generate(true)}
+          refreshDisabled={submitting || ai.busy}
+        />
+      ) : null}
+    </section>
   );
 }
 
