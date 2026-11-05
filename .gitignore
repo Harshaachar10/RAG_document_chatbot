@@ -9,6 +9,8 @@ __pycache__/
 backend/data/runtime/state.json
 backend/data/runtime/*.tmp
 backend/data/runtime-e2e/
+backend/data/uploads/*
+!backend/data/uploads/.gitkeep
 *.egg-info/
 .coverage
 htmlcov/

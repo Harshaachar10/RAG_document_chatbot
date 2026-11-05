@@ -21,7 +21,7 @@ export function Drawer({
         <Dialog.Overlay className="fixed inset-0 z-40 bg-black/30 drawer-enter" />
         <Dialog.Content
           className={`fixed right-0 top-0 z-50 flex h-full w-full flex-col bg-white shadow-2xl drawer-enter focus:outline-none ${
-            wide ? 'md:w-[80vw]' : 'md:w-[480px]'
+            wide ? 'md:w-[min(1100px,92vw)]' : 'md:w-[480px]'
           }`}
           aria-label={title || 'Details drawer'}
         >

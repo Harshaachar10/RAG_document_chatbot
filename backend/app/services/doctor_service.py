@@ -3,13 +3,12 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional, Set
 
 from app.core.exceptions import NotFoundError, ValidationAppError
-from app.repositories.csv_repository import CsvDemoRepository
 from app.services.filtering import matches_search, paginate, sort_items
 from app.utils.links import display_npi_status, is_linked_status
 
 
 class DoctorService:
-    def __init__(self, repo: CsvDemoRepository, resolution: Any = None) -> None:
+    def __init__(self, repo: Any, resolution: Any = None) -> None:
         self.repo = repo
         self.resolution = resolution
 
@@ -116,14 +115,24 @@ class DoctorService:
                 "preferred_name": doctor.get("preferred_name"),
                 "specialty": doctor.get("specialty"),
                 "primary_affiliation": primary.get("organization_name") if primary else None,
-                "affiliation_count": len([a for a in affs if a.get("relationship_status") in {"current", "proposed", "historical_observation", "previous"}]),
+                "affiliation_count": len(affs),
                 "city": doctor.get("city"),
                 "state": doctor.get("state"),
+                "location": ", ".join(x for x in [doctor.get("city"), doctor.get("state")] if x),
                 "linked_record_count": len(accepted),
                 "pending_item_count": pend,
+                "open_issues": doctor.get("open_issue_count") or pend,
                 "identity_status": doctor.get("identity_status"),
                 "updated_at": doctor.get("updated_at"),
                 "npi_status": display_npi_status(doctor.get("npi_status")),
+                "official_npi": doctor.get("official_npi"),
+                "master_id": doctor.get("master_id") or did,
+                "aliases": alias_map.get(did, []),
+                "alias_count": len(alias_map.get(did, [])),
+                "credential": doctor.get("credential"),
+                "license_states": doctor.get("license_states") or [],
+                "source_count": len(doctor.get("sources") or []),
+                "badge": doctor.get("badge") or display_npi_status(doctor.get("npi_status")),
             })
 
         allow = {
@@ -252,6 +261,8 @@ class DoctorService:
                     "recorded_name": rec.get("recorded_name"),
                     "practice_name": rec.get("practice_name"),
                     "email": rec.get("email"),
+                    "provider_identifier": rec.get("provider_identifier"),
+                    "identifier_kind": rec.get("identifier_kind"),
                 },
                 "linkage_explanation": link.get("decision_basis"),
                 "submitted_by": rec.get("submitted_by") or "Not recorded",
@@ -397,6 +408,11 @@ class DoctorService:
             missing_npi = not (rec.get("provider_identifier") or "").strip() or (
                 (rec.get("identifier_kind") or "").lower() in {"missing", "absent", "none"}
             )
+            evid_ids = [
+                e["evidence_id"]
+                for e in self.repo.list_evidence()
+                if e.get("source_record_id") == rec.get("source_record_id")
+            ]
             evidence_rows.append({
                 "observation": f"{rec.get('recorded_name')} on {rec.get('record_date') or 'unknown date'}",
                 "supports": not missing_npi,
@@ -405,7 +421,9 @@ class DoctorService:
                     if missing_npi
                     else f"Linked via {link.get('decision_basis') or link.get('link_status')}"
                 ),
-                "citation": rec.get("source_record_id"),
+                "citation": evid_ids[0] if evid_ids else rec.get("source_record_id"),
+                "evidence_id": evid_ids[0] if evid_ids else None,
+                "source_record_id": rec.get("source_record_id"),
             })
         constraints = []
         for constraint in self.repo.list_constraints():

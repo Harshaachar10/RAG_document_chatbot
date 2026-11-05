@@ -1,7 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as Tabs from '@radix-ui/react-tabs';
-import { Expand, X } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import {
   fetchAiAnalyses,
@@ -13,7 +12,6 @@ import {
 import {
   fetchDoctor,
   fetchDoctorHistory,
-  fetchDoctorReviewHistory,
   fetchDoctorSourceRecords,
   fetchMatchExplanation,
 } from '../../../api/doctors';
@@ -23,20 +21,17 @@ import { ErrorState } from '../../../components/ErrorState';
 import { Skeleton } from '../../../components/Skeleton';
 import { StatusBadge } from '../../../components/StatusBadge';
 import { displayValue } from '../../../utils/formatters';
-import { DoctorTimeline, FieldHistoryTable } from './DoctorTimeline';
+import { DoctorTimeline } from './DoctorTimeline';
 import { EvidenceWorkspace } from './EvidenceWorkspace';
 import { LinkedRecordsTable } from './LinkedRecordsTable';
 import { MatchExplanation } from './MatchExplanation';
 import { ProfileSummary } from './ProfileSummary';
-import { ReviewHistory } from './ReviewHistory';
 
 const TABS = [
-  { id: 'summary', label: 'Profile Summary' },
+  { id: 'summary', label: 'Overview' },
   { id: 'linked', label: 'Linked Records' },
-  { id: 'history', label: 'History & Timeline' },
-  { id: 'evidence', label: 'Evidence & Sources' },
-  { id: 'match', label: 'Why These Records Match' },
-  { id: 'reviews', label: 'Review History' },
+  { id: 'history', label: 'Timeline' },
+  { id: 'evidence', label: 'Evidence / AI Reasoning' },
 ] as const;
 
 export function DoctorProfile({
@@ -45,7 +40,6 @@ export function DoctorProfile({
   onTabChange,
   mode = 'page',
   onClose,
-  expandTo,
   eventId,
   evidenceId: initialEvidenceId,
 }: {
@@ -58,10 +52,11 @@ export function DoctorProfile({
   eventId?: string | null;
   evidenceId?: string | null;
 }) {
+  const activeTab = tab === 'match' || tab === 'reviews' ? 'evidence' : tab;
   const [aliasFilter, setAliasFilter] = useState<string | null>(null);
-  const [historyMode, setHistoryMode] = useState<'timeline' | 'table'>('timeline');
   const [evidenceId, setEvidenceId] = useState<string | null>(initialEvidenceId || null);
   const [mobileEvidence, setMobileEvidence] = useState(false);
+  const [highlightGapsFor, setHighlightGapsFor] = useState<string | null>(null);
 
   const doctorQuery = useQuery({
     queryKey: ['doctor', doctorId],
@@ -79,10 +74,6 @@ export function DoctorProfile({
     queryKey: ['doctor-match', doctorId],
     queryFn: ({ signal }) => fetchMatchExplanation(doctorId, signal),
   });
-  const reviewHistoryQuery = useQuery({
-    queryKey: ['doctor-review-history', doctorId],
-    queryFn: ({ signal }) => fetchDoctorReviewHistory(doctorId, signal),
-  });
 
   const evidenceList = useMemo(() => {
     const ids = new Set<string>();
@@ -93,8 +84,9 @@ export function DoctorProfile({
     return Array.from(ids);
   }, [recordsQuery.data, historyQuery.data]);
 
-  const openEvidence = (id: string) => {
+  const openEvidence = (id: string, sourceRecordId?: string | null) => {
     setEvidenceId(id);
+    setHighlightGapsFor(sourceRecordId || null);
     setMobileEvidence(true);
     onTabChange?.('evidence');
   };
@@ -104,6 +96,7 @@ export function DoctorProfile({
     return <ErrorState message={(doctorQuery.error as Error).message} onRetry={() => doctorQuery.refetch()} />;
   }
   const doctor = doctorQuery.data!;
+  const highlightedRecord = (recordsQuery.data?.items || []).find((r) => r.source_record_id === highlightGapsFor);
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -116,14 +109,11 @@ export function DoctorProfile({
             </p>
             <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
               <span className="rounded-md bg-slate-100 px-2 py-0.5 font-medium">{doctor.doctor_id}</span>
-              <span className="text-muted">NPI: Not verified</span>
+              <span className="text-muted">NPI reference: {displayValue(doctor.mock_npi_ref, 'Not verified')}</span>
               <StatusBadge value={doctor.identity_review_status === 'pending' ? 'pending' : 'clear'} kind="review" />
-              {doctor.pending_field_changes > 0 ? (
-                <StatusBadge value="pending" kind="review" />
-              ) : null}
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
-              <span className="text-xs text-muted self-center">Also recorded as:</span>
+              <span className="self-center text-xs text-muted">Also recorded as:</span>
               {doctor.aliases.map((a) => {
                 const name = String(a.name);
                 const selected = aliasFilter === name;
@@ -147,14 +137,6 @@ export function DoctorProfile({
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {mode === 'drawer' && expandTo ? (
-              <Link
-                to={expandTo}
-                className="inline-flex items-center gap-1 rounded-md border border-border px-2.5 py-1.5 text-sm hover:bg-slate-50"
-              >
-                <Expand size={14} /> Expand profile
-              </Link>
-            ) : null}
             {mode === 'drawer' && onClose ? (
               <button type="button" onClick={onClose} className="rounded-md p-1.5 hover:bg-slate-100" aria-label="Close">
                 <X size={16} />
@@ -165,7 +147,7 @@ export function DoctorProfile({
       </header>
 
       <Tabs.Root
-        value={tab}
+        value={activeTab}
         onValueChange={(v) => onTabChange?.(v)}
         className="flex min-h-0 flex-1 flex-col"
       >
@@ -193,76 +175,97 @@ export function DoctorProfile({
             {recordsQuery.data ? (
               <LinkedRecordsTable
                 records={recordsQuery.data.items}
-                onOpenEvidence={openEvidence}
+                onOpenEvidence={(id) => {
+                  const rec = recordsQuery.data.items.find((r) => r.evidence_ids.includes(id));
+                  openEvidence(id, rec?.source_record_id);
+                }}
+                onOpenRecord={(rec) => {
+                  if (rec.evidence_ids[0]) openEvidence(rec.evidence_ids[0], rec.source_record_id);
+                  else {
+                    setHighlightGapsFor(rec.source_record_id);
+                    onTabChange?.('evidence');
+                  }
+                }}
                 aliasFilter={aliasFilter}
               />
             ) : null}
           </Tabs.Content>
           <Tabs.Content value="history">
-            <div className="mb-3 flex gap-2">
-              <button type="button" className={`rounded-md px-2.5 py-1 text-xs ${historyMode === 'timeline' ? 'bg-primary text-white' : 'bg-slate-100'}`} onClick={() => setHistoryMode('timeline')}>Timeline</button>
-              <button type="button" className={`rounded-md px-2.5 py-1 text-xs ${historyMode === 'table' ? 'bg-primary text-white' : 'bg-slate-100'}`} onClick={() => setHistoryMode('table')}>Table</button>
-            </div>
             <HistoryAiPanel
               recordIds={(recordsQuery.data?.items || []).map((r) => r.source_record_id)}
               onOpenEvidence={openEvidence}
             />
             {historyQuery.isLoading ? <Skeleton className="h-40 w-full" /> : null}
             {historyQuery.data ? (
-              historyMode === 'timeline' ? (
-                <DoctorTimeline
-                  events={historyQuery.data.items}
-                  highlightEventId={eventId}
-                  onOpenEvidence={openEvidence}
-                  trailSummary={historyQuery.data.trail_summary}
-                />
-              ) : (
-                <FieldHistoryTable
-                  events={historyQuery.data.items}
-                  highlightEventId={eventId}
-                  onOpenEvidence={openEvidence}
-                  trailSummary={historyQuery.data.trail_summary}
-                />
-              )
+              <DoctorTimeline
+                events={historyQuery.data.items}
+                highlightEventId={eventId}
+                onOpenEvidence={(id) => {
+                  const evt = historyQuery.data.items.find((e) => e.evidence_id === id);
+                  openEvidence(id, evt?.source_record_id);
+                }}
+                trailSummary={historyQuery.data.trail_summary}
+              />
             ) : null}
           </Tabs.Content>
           <Tabs.Content value="evidence">
-            <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
-              <div className={`rounded-[12px] border border-border bg-white p-3 ${mobileEvidence ? 'hidden lg:block' : ''}`}>
-                <h3 className="text-sm font-semibold">Evidence list</h3>
-                <ul className="mt-3 space-y-1">
-                  {evidenceList.map((id) => (
-                    <li key={id}>
-                      <button
-                        type="button"
-                        className={`w-full rounded-md px-2 py-1.5 text-left text-sm ${evidenceId === id ? 'bg-primary text-white' : 'hover:bg-slate-50'}`}
-                        onClick={() => {
-                          setEvidenceId(id);
-                          setMobileEvidence(true);
-                        }}
-                      >
-                        {id}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className={`${!mobileEvidence ? 'hidden lg:block' : ''}`}>
-                <EvidenceWorkspace evidenceId={evidenceId || evidenceList[0]} onBack={() => setMobileEvidence(false)} />
+            <div className="space-y-4">
+              <MatchAiPanel
+                recordIds={(recordsQuery.data?.items || []).map((r) => r.source_record_id)}
+                onOpenEvidence={openEvidence}
+              />
+              {matchQuery.data ? (
+                <MatchExplanation
+                  data={matchQuery.data}
+                  onOpenEvidence={openEvidence}
+                  onOpenSourceRecord={(sourceRecordId) => {
+                    const rec = (recordsQuery.data?.items || []).find((r) => r.source_record_id === sourceRecordId);
+                    if (rec?.evidence_ids[0]) openEvidence(rec.evidence_ids[0], sourceRecordId);
+                  }}
+                />
+              ) : null}
+              {highlightedRecord ? (
+                <section className="rounded-[12px] border border-amber-200 bg-amber-50 p-3 text-sm">
+                  <h4 className="font-semibold text-amber-950">Highlighted source record {highlightedRecord.source_record_id}</h4>
+                  <p className="mt-1">
+                    Provided: {displayValue(highlightedRecord.recorded_name)} · {displayValue(highlightedRecord.practice_name)} ·{' '}
+                    {displayValue(highlightedRecord.provider_identifier, 'NPI missing')}
+                  </p>
+                  <p className="mt-1 text-amber-900">
+                    Missing:{' '}
+                    {[
+                      !highlightedRecord.provider_identifier || highlightedRecord.identifier_kind === 'missing' ? 'NPI' : null,
+                      !highlightedRecord.address_line ? 'Address' : null,
+                      !highlightedRecord.email && !highlightedRecord.phone ? 'Contact' : null,
+                    ].filter(Boolean).join(', ') || 'None highlighted'}
+                  </p>
+                </section>
+              ) : null}
+              <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
+                <div className={`rounded-[12px] border border-border bg-white p-3 ${mobileEvidence ? 'hidden lg:block' : ''}`}>
+                  <h3 className="text-sm font-semibold">Evidence list</h3>
+                  <ul className="mt-3 space-y-1">
+                    {evidenceList.map((id) => (
+                      <li key={id}>
+                        <button
+                          type="button"
+                          className={`w-full rounded-md px-2 py-1.5 text-left text-sm ${evidenceId === id ? 'bg-primary text-white' : 'hover:bg-slate-50'}`}
+                          onClick={() => {
+                            setEvidenceId(id);
+                            setMobileEvidence(true);
+                          }}
+                        >
+                          {id}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className={`${!mobileEvidence ? 'hidden lg:block' : ''}`}>
+                  <EvidenceWorkspace evidenceId={evidenceId || evidenceList[0]} onBack={() => setMobileEvidence(false)} />
+                </div>
               </div>
             </div>
-          </Tabs.Content>
-          <Tabs.Content value="match">
-            <MatchAiPanel
-              recordIds={(recordsQuery.data?.items || []).map((r) => r.source_record_id)}
-              onOpenEvidence={openEvidence}
-            />
-            {matchQuery.isLoading ? <Skeleton className="h-40 w-full" /> : null}
-            {matchQuery.data ? <MatchExplanation data={matchQuery.data} /> : null}
-          </Tabs.Content>
-          <Tabs.Content value="reviews">
-            {reviewHistoryQuery.isLoading ? <Skeleton className="h-40 w-full" /> : null}
-            {reviewHistoryQuery.data ? <ReviewHistory items={reviewHistoryQuery.data.items} /> : null}
           </Tabs.Content>
         </div>
       </Tabs.Root>
@@ -307,10 +310,10 @@ function HistoryAiPanel({
           disabled={submitting || ai.busy || !recordIds.length}
           onClick={() => generate(false)}
         >
-          Analyze identity trail with AI
+          Summarize identity trail with AI
         </button>
         <p className="text-xs text-muted">
-          Azure OpenAI reads the linked documents and calls out address changes, missing NPI, and other gaps across dates.
+          Uses current linked documents and dated history. Supported facts, proposed changes, and unresolved gaps stay separate.
         </p>
       </div>
       {error ? <ErrorState title="Trail analysis failed" message={error} /> : null}
@@ -339,7 +342,7 @@ function MatchAiPanel({
 
   async function generate(forceRefresh: boolean) {
     if (recordIds.length < 2) {
-      setError('Select or link at least two source records before running AI identity analysis.');
+      setError('At least two linked source records are needed for AI identity reasoning.');
       return;
     }
     setError(null);
@@ -363,10 +366,10 @@ function MatchAiPanel({
           disabled={submitting || ai.busy || recordIds.length < 2}
           onClick={() => generate(false)}
         >
-          Run live AI identity analysis
+          Explain why these records may match
         </button>
         <p className="text-xs text-muted">
-          Uses Azure OpenAI on linked records. The comparison table below is the dataset linkage only.
+          Azure OpenAI cites shared identifiers, credentials, contacts, aliases, and dated evidence without claiming a confirmed match when gaps remain.
         </p>
       </div>
       {error ? <ErrorState title="Identity analysis failed" message={error} /> : null}
@@ -437,7 +440,7 @@ function ProfileAiPanel({
           disabled={submitting || ai.busy}
           onClick={() => generate(false)}
         >
-          Generate AI summary
+          Generate AI overview
         </button>
         <button
           type="button"
@@ -448,7 +451,7 @@ function ProfileAiPanel({
         </button>
       </div>
       <p className="text-xs text-muted">
-        The profile above is the prepared record. A summary is generated only when you ask for it.
+        Summarizes current profile facts and remaining gaps from the linked evidence history.
       </p>
       {cached.isError ? <ErrorState message={(cached.error as Error).message} onRetry={() => cached.refetch()} /> : null}
       {error ? <ErrorState title="Summary failed" message={error} /> : null}

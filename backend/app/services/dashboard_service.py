@@ -2,12 +2,15 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional, Set
 
-from app.repositories.csv_repository import CsvDemoRepository
+from app.identity.labels import case_label, risk_rank, source_label
 from app.utils.links import is_linked_status
+
+# NPPES + legacy master are reference/master baselines — not "source doctor entries"
+NON_SOURCE_ENTRY_KEYS = frozenset({"nppes", "legacy_master"})
 
 
 class DashboardService:
-    def __init__(self, repo: CsvDemoRepository) -> None:
+    def __init__(self, repo: Any) -> None:
         self.repo = repo
 
     def _scoped_doctor_ids(
@@ -56,6 +59,27 @@ class DashboardService:
             ids.add(did)
         return ids
 
+    def _npi_issue_buckets(self, records: List[Dict[str, Any]]) -> Dict[str, int]:
+        buckets = {"group": 0, "invalid": 0, "deactivated": 0, "mismatch": 0}
+        for rec in records:
+            for lookup in rec.get("npi_lookups") or []:
+                status = lookup.get("status") or ""
+                if status in {"luhn_fail", "invalid_format", "placeholder"}:
+                    buckets["invalid"] += 1
+                elif status == "deactivated":
+                    buckets["deactivated"] += 1
+                elif status == "not_in_reference":
+                    buckets["mismatch"] += 1
+            for flag in rec.get("record_flags") or []:
+                code = (flag.get("code") or "").upper()
+                if "GROUP" in code or "ORG_ENTITY" in code:
+                    buckets["group"] += 1
+            for nf in rec.get("npi_fields") or []:
+                # Entity-type group NPIs are surfaced via hard stops on NPPES entity 2
+                if nf.get("status") == "valid" and (rec.get("raw") or {}).get("Entity_Type_Code") == "2":
+                    buckets["group"] += 1
+        return buckets
+
     def summary(
         self,
         *,
@@ -63,149 +87,224 @@ class DashboardService:
         specialty: Optional[str] = None,
         state: Optional[str] = None,
         review_state: Optional[str] = None,
+        view: Optional[str] = None,
     ) -> Dict[str, Any]:
+        view = view or "historical"
         doctor_ids = self._scoped_doctor_ids(
             source_id=source_id, specialty=specialty, state=state, review_state=review_state
         )
         records = self.repo.list_source_records()
         links = self.repo.list_links()
         reviews = self.repo.list_reviews()
-        sources = {s["source_id"]: s for s in self.repo.list_sources()}
+        doctors = {d["doctor_id"]: d for d in self.repo.list_doctors()}
+        state_snap = self.repo.state()
+        pipeline_counts = state_snap.get("pipeline_counts") or {}
+        actions = pipeline_counts.get("actions") or {}
 
-        # Source filter for record KPIs counts only records from that source
-        scoped_records = [
-            r for r in records
-            if (not source_id or r.get("source_id") == source_id)
+        # Incoming/upload batches only when view=incoming; historical = source CSVs
+        upload_batches = state_snap.get("upload_batches") or []
+        if view == "incoming":
+            scoped_records = [
+                r for r in records if (r.get("source_id") or "").startswith("upload")
+            ]
+        elif view == "all":
+            scoped_records = list(records)
+        else:
+            scoped_records = [
+                r
+                for r in records
+                if not (r.get("source_id") or "").startswith("upload")
+            ]
+
+        if source_id:
+            scoped_records = [r for r in scoped_records if r.get("source_id") == source_id]
+
+        # Exclude NPPES + legacy master from "source records processed" denominator narrative
+        processable = [
+            r for r in scoped_records if r.get("source_id") not in NON_SOURCE_ENTRY_KEYS
         ]
-        identity_entries = [r for r in scoped_records if r.get("record_kind") == "identity_entry"]
-        eligible = identity_entries  # denominator for linked/all eligible
+
         accepted_links = {
             l["source_record_id"]: l
             for l in links
-            if is_linked_status(l.get("link_status")) and l.get("doctor_id") in doctor_ids
+            if is_linked_status(l.get("link_status"))
         }
-        linked_identity = [
-            r for r in identity_entries
-            if r["source_record_id"] in accepted_links
-        ]
+        resolved = [r for r in processable if r["source_record_id"] in accepted_links]
+        gained_npi = sum(
+            1
+            for r in resolved
+            if r.get("provider_identifier")
+            and not any(
+                nf.get("valid") and nf.get("digits") == r.get("provider_identifier")
+                for nf in (r.get("npi_fields") or [])
+                if nf.get("field")  # had a stated NPI field that was empty/invalid originally
+            )
+            # simpler: linked record whose source NPI was missing
+            or (
+                not any(nf.get("valid") for nf in (r.get("npi_fields") or []))
+                and r.get("provider_identifier")
+            )
+        )
+        # recount gained missing NPI properly
+        gained_npi = 0
+        for r in resolved:
+            had_valid = any(nf.get("valid") for nf in (r.get("npi_fields") or []))
+            link = accepted_links.get(r["source_record_id"])
+            if link and not had_valid:
+                gained_npi += 1
 
-        # Consolidated duplicates: sum(max(linked identity_entry count for doctor - 1, 0))
-        per_doctor_identity: Dict[str, int] = {}
-        records_by_id = {r["source_record_id"]: r for r in records}
-        for link in links:
-            did = link.get("doctor_id")
-            if not did or did not in doctor_ids or not is_linked_status(link.get("link_status")):
-                continue
-            rec = records_by_id.get(link.get("source_record_id"))
-            if not rec or rec.get("record_kind") != "identity_entry":
-                continue
-            if source_id and rec.get("source_id") != source_id:
-                continue
-            per_doctor_identity[did] = per_doctor_identity.get(did, 0) + 1
-        consolidated = sum(max(count - 1, 0) for count in per_doctor_identity.values())
+        npi_issues = self._npi_issue_buckets(processable)
+        wrong_total = sum(npi_issues.values())
 
-        pending_reviews = [
-            r for r in reviews
-            if r.get("status") == "pending"
-            and (not r.get("doctor_id") or r.get("doctor_id") in doctor_ids)
-        ]
-        deferred_reviews = [r for r in reviews if r.get("status") == "deferred"]
-        proposed_change_doctors = {
-            r.get("doctor_id")
+        metrics = state_snap.get("pipeline_metrics") or pipeline_counts.get("metrics") or {}
+        masters_after = int(metrics.get("doctors") or len(doctors))
+        masters_before = int(metrics.get("legacy_rows") or 0)
+        merges = int(metrics.get("merges") or 0)
+        splits = int(metrics.get("splits") or 0)
+        new_masters = int(metrics.get("new_masters") or 0)
+
+        same_name_kept = sum(
+            1
             for r in reviews
-            if r.get("status") == "pending"
-            and r.get("case_type") in {"name_update", "address_update", "affiliation_update", "contact_update"}
-            and r.get("doctor_id") in doctor_ids
-        }
+            if r.get("case_type") == "same_name_ambiguity" and r.get("status") in {"pending", "completed", "approved"}
+        )
+        # also count distinct family names with 2+ goldens
+        by_family: Dict[str, int] = {}
+        for d in doctors.values():
+            fam = (d.get("family_name") or "").lower()
+            if fam:
+                by_family[fam] = by_family.get(fam, 0) + 1
+        same_name_doctors = sum(1 for c in by_family.values() if c > 1)
+
+        pending_reviews = [r for r in reviews if r.get("status") == "pending"]
+        compliance = [
+            r
+            for r in pending_reviews
+            if r.get("case_type") == "compliance_review" or r.get("pipeline_action") == "COMPLIANCE_REVIEW"
+        ]
+        unmatched = [r for r in processable if (r.get("resolution_status") or "") in {"unresolved", "pending_review"} and r["source_record_id"] not in accepted_links]
+        provisional = [
+            d
+            for d in doctors.values()
+            if (d.get("npi_status") in {"unassigned", "provisional"} or not d.get("official_npi"))
+            and d.get("identity_status") != "reference"
+        ]
 
         filters = {
             "source_id": source_id,
             "specialty": specialty,
             "state": state,
             "review_state": review_state,
+            "view": view,
         }
+
+        def kpi(key, label, value, href, tooltip, secondary=None, display=None, extra_filters=None):
+            return {
+                "key": key,
+                "label": label,
+                "value": value,
+                "secondary_value": secondary,
+                "display": display if display is not None else str(value),
+                "tooltip": tooltip,
+                "href": href,
+                "filters": {**(extra_filters or {}), **{k: v for k, v in filters.items() if v}},
+            }
+
         kpis = [
-            {
-                "key": "source_doctor_entries",
-                "label": "Source Doctor Entries",
-                "value": len(identity_entries),
-                "secondary_value": None,
-                "display": str(len(identity_entries)),
-                "tooltip": "Count of source records classified as identity_entry in the selected source scope.",
-                "href": "/sources",
-                "filters": {"record_kind": "identity_entry", **{k: v for k, v in filters.items() if v}},
-            },
-            {
-                "key": "golden_profiles",
-                "label": "Golden Doctor Profiles",
-                "value": len(doctor_ids),
-                "secondary_value": None,
-                "display": str(len(doctor_ids)),
-                "tooltip": "Distinct active doctor IDs in the selected cohort (source filter selects doctors linked to that source).",
-                "href": "/golden-records",
-                "filters": {k: v for k, v in filters.items() if v},
-            },
-            {
-                "key": "linked_records",
-                "label": "Linked Records",
-                "value": len(linked_identity),
-                "secondary_value": len(eligible),
-                "display": f"{len(linked_identity)}/{len(eligible)}",
-                "tooltip": "Linked identity_entry records over all eligible identity_entry records in source scope.",
-                "href": "/sources",
-                "filters": {"resolution_status": "linked", **{k: v for k, v in filters.items() if v}},
-            },
-            {
-                "key": "consolidated_duplicates",
-                "label": "Consolidated Duplicate Entries",
-                "value": consolidated,
-                "secondary_value": None,
-                "display": str(consolidated),
-                "tooltip": "Additional identity entries consolidated into an existing profile in this demo. Claims, invoices and other transactions are excluded.",
-                "href": "/golden-records",
-                "filters": {k: v for k, v in filters.items() if v},
-            },
-            {
-                "key": "pending_reviews",
-                "label": "Pending Reviews",
-                "value": len(pending_reviews),
-                "secondary_value": len(deferred_reviews),
-                "display": str(len(pending_reviews)),
-                "tooltip": f"Pending cases in scope. Deferred counted separately ({len(deferred_reviews)}).",
-                "href": "/reviews",
-                "filters": {"status": "pending"},
-            },
-            {
-                "key": "profiles_with_proposals",
-                "label": "Profiles with Proposed Changes",
-                "value": len(proposed_change_doctors),
-                "secondary_value": None,
-                "display": str(len(proposed_change_doctors)),
-                "tooltip": "Distinct doctors with pending name/address/affiliation proposals.",
-                "href": "/reviews",
-                "filters": {"status": "pending", "case_type": "affiliation_update"},
-            },
+            kpi(
+                "source_records_processed",
+                "Source records processed",
+                len(processable),
+                "/sources",
+                "All non-reference source rows in scope (excludes NPPES and Legacy Master baselines).",
+            ),
+            kpi(
+                "resolved_to_npi",
+                "Records resolved to an NPI",
+                len(resolved),
+                "/golden-records",
+                f"{gained_npi} of these gained a missing NPI via match.",
+                secondary=gained_npi,
+                display=f"{len(resolved)} ({gained_npi} gained NPI)",
+            ),
+            kpi(
+                "wrong_npis_flagged",
+                "Wrong NPIs flagged",
+                wrong_total,
+                "/reviews",
+                "Group / invalid / deactivated / mismatch buckets.",
+                display=f"{wrong_total} (G{npi_issues['group']} I{npi_issues['invalid']} D{npi_issues['deactivated']} M{npi_issues['mismatch']})",
+                extra_filters={"issue": "npi"},
+            ),
+            kpi(
+                "master_cleanup",
+                "Master records before → after",
+                masters_after,
+                "/golden-records",
+                f"Legacy master rows {masters_before}. Merges {merges}. Splits {splits}. New masters {new_masters}.",
+                secondary=masters_before,
+                display=f"{masters_before} → {masters_after}",
+            ),
+            kpi(
+                "same_name_separate",
+                "Same-name doctors kept separate",
+                same_name_doctors or same_name_kept,
+                "/reviews",
+                "Golden profiles sharing a family name, plus same-name ambiguity cases.",
+                extra_filters={"case_type": "same_name_ambiguity"},
+            ),
+            kpi(
+                "pending_human_review",
+                "Pending human review",
+                len(pending_reviews),
+                "/reviews",
+                "Open review-center cases.",
+                extra_filters={"status": "pending"},
+            ),
+            kpi(
+                "payment_compliance",
+                "Payment records needing compliance review",
+                len(compliance),
+                "/payment-compliance",
+                "Transparency / payment rows that must not auto-correct filed values.",
+            ),
+            kpi(
+                "unmatched_provisional",
+                "Unmatched / provisional (no NPI)",
+                len(unmatched) + len(provisional),
+                "/golden-records",
+                f"{len(unmatched)} unmatched source rows; {len(provisional)} provisional masters.",
+                display=f"{len(unmatched)} unmatched · {len(provisional)} provisional",
+            ),
         ]
 
-        # Priority reviews
-        severity_rank = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+        # Priority list by business risk
         priority = sorted(
-            [r for r in reviews if r.get("status") == "pending"],
-            key=lambda r: (severity_rank.get(r.get("severity") or "low", 9), r.get("created_at") or ""),
-        )[:8]
-        doctors = {d["doctor_id"]: d for d in self.repo.list_doctors()}
+            pending_reviews,
+            key=lambda r: (
+                *risk_rank(r.get("case_type"), r.get("severity"), r.get("pipeline_action")),
+                r.get("created_at") or "",
+            ),
+        )[:12]
         priority_rows = []
         for r in priority:
             d = doctors.get(r.get("doctor_id") or "")
+            rec = next((x for x in records if x.get("source_record_id") == r.get("source_record_id")), None)
             priority_rows.append({
                 "review_id": r["review_id"],
                 "title": r.get("title"),
                 "doctor_id": r.get("doctor_id"),
-                "doctor_name": d.get("preferred_name") if d else r.get("candidate_doctor_id"),
-                "reason": r.get("case_type"),
+                "doctor_name": (d.get("preferred_name") if d else None)
+                or (rec.get("recorded_name") if rec else None)
+                or "Unassigned candidate",
+                "issue": case_label(r.get("case_type")),
+                "reason": r.get("pipeline_reason") or case_label(r.get("case_type")),
+                "source": source_label((rec or {}).get("source_id")),
+                "source_id": (rec or {}).get("source_id"),
                 "severity": r.get("severity"),
                 "status": r.get("status"),
                 "created_at": r.get("created_at"),
+                "href": f"/reviews/{r['review_id']}",
             })
 
         events = sorted(self.repo.list_events(), key=lambda e: e.get("recorded_at") or "", reverse=True)[:8]
@@ -227,57 +326,55 @@ class DashboardService:
         for source in self.repo.list_sources():
             src_records = [r for r in records if r.get("source_id") == source["source_id"]]
             latest = max((r.get("record_date") or "" for r in src_records), default=None) or source.get("updated_at")
-            filled = 0
-            total_fields = 0
-            for r in src_records:
-                for field in ("recorded_name", "specialty", "practice_name", "city", "state", "email"):
-                    total_fields += 1
-                    if r.get(field):
-                        filled += 1
-            completeness = round(filled / total_fields, 3) if total_fields else 0
             source_coverage.append({
                 "source_id": source["source_id"],
-                "source_name": source["source_name"],
-                "row_count": len(src_records),
+                "source_name": source_label(source["source_id"]),
+                "row_count": source.get("row_count") or len(src_records),
                 "latest_data_date": latest,
-                "completeness": completeness,
             })
 
-        audits = sorted(self.repo.list_audit(), key=lambda a: a.get("occurred_at") or "", reverse=True)[:8]
+        audits = sorted(
+            self.repo.list_audit(),
+            key=lambda a: a.get("occurred_at") or a.get("created_at") or "",
+            reverse=True,
+        )[:8]
         recent_decisions = []
         for a in audits:
             d = doctors.get(a.get("doctor_id") or "")
             recent_decisions.append({
-                "audit_id": a["audit_id"],
-                "actor_label": a.get("actor_label"),
+                "audit_id": a.get("audit_id"),
+                "actor_label": a.get("actor_label") or a.get("actor") or "System",
                 "action": a.get("action"),
                 "doctor_id": a.get("doctor_id"),
                 "doctor_name": d.get("preferred_name") if d else None,
-                "occurred_at": a.get("occurred_at"),
+                "occurred_at": a.get("occurred_at") or a.get("created_at"),
                 "review_id": a.get("review_id"),
-                "is_seeded": a.get("is_seeded"),
             })
 
-        manifest = self.repo.manifest()
-        dataset_updated_at = manifest.get("generated_at")
-        if not dataset_updated_at:
-            dated = [s.get("updated_at") for s in self.repo.list_sources() if s.get("updated_at")]
-            dataset_updated_at = max(dated) if dated else None
-        runs = self.repo.state().get("demo_runs") or []
+        run_meta = state_snap.get("pipeline_run") or {}
+        runs = state_snap.get("pipeline_runs") or state_snap.get("demo_runs") or []
         last_run = None
-        completed = [r for r in runs if r.get("status") == "completed"]
-        if completed:
-            last_run = max(completed, key=lambda r: r.get("updated_at") or "")
+        if runs:
+            last_run = max(runs, key=lambda r: r.get("updated_at") or r.get("finished_at") or "")
+        last_run_at = (last_run or {}).get("updated_at") or run_meta.get("finished_at")
+        last_run_status = (last_run or {}).get("status") or ("completed" if run_meta.get("finished_at") else None)
+
         return {
-            "dataset_updated_at": dataset_updated_at,
-            "last_simulated_run_at": (last_run or {}).get("updated_at"),
+            "dataset_updated_at": run_meta.get("finished_at") or last_run_at,
+            "last_simulated_run_at": last_run_at,
+            "last_run_status": last_run_status,
+            "view": view,
             "snapshot_version": self.repo.snapshot_version(),
             "applied_filters": filters,
             "kpis": kpis,
+            "npi_issue_buckets": npi_issues,
+            "action_counts": actions,
+            "scorecard_available": False,
             "priority_reviews": priority_rows,
             "recent_changes": recent_changes,
             "source_coverage": source_coverage,
             "recent_decisions": recent_decisions,
+            "upload_batch_count": len(upload_batches),
         }
 
     def source_breakdown(
@@ -287,32 +384,58 @@ class DashboardService:
         specialty: Optional[str] = None,
         state: Optional[str] = None,
     ) -> Dict[str, Any]:
-        records = self.repo.list_source_records()
+        """Final pipeline action counts by source (business labels)."""
+        state_snap = self.repo.state()
+        decisions = []
+        # Reconstruct from reviews + linked records
+        records = {r["source_record_id"]: r for r in self.repo.list_source_records()}
+        action_by_uid: Dict[str, str] = {}
+        for review in self.repo.list_reviews():
+            uid = review.get("source_record_id")
+            if uid and review.get("pipeline_action"):
+                action_by_uid[uid] = review["pipeline_action"]
+        for link in self.repo.list_links():
+            uid = link.get("source_record_id")
+            if uid and uid not in action_by_uid and is_linked_status(link.get("link_status")):
+                action_by_uid[uid] = "AUTO_LINK"
+
+        action_keys = ["AUTO_LINK", "REVIEW", "COMPLIANCE_REVIEW", "DEDUPE_REVIEW", "ASSIGN_NPI", "NOT_A_PERSON"]
         rows = []
-        statuses = ["linked", "review_required", "unresolved", "identifier_conflict", "duplicate_ingestion"]
         for source in self.repo.list_sources():
             if source_id and source["source_id"] != source_id:
                 continue
-            src_records = [r for r in records if r.get("source_id") == source["source_id"]]
-            # specialty/state filter applies to records themselves for chart drill coherence
+            if source["source_id"] == "nppes":
+                continue
+            src_records = [r for r in records.values() if r.get("source_id") == source["source_id"]]
             if specialty:
                 src_records = [r for r in src_records if r.get("specialty") == specialty]
             if state:
                 src_records = [r for r in src_records if r.get("state") == state]
             segments = []
-            for status in statuses:
-                segments.append({
-                    "status": status,
-                    "count": sum(1 for r in src_records if (r.get("resolution_status") or "") == status),
-                })
+            for action in action_keys:
+                count = sum(1 for r in src_records if action_by_uid.get(r["source_record_id"]) == action)
+                # pending_review without pipeline_action → REVIEW
+                if action == "REVIEW":
+                    count = sum(
+                        1
+                        for r in src_records
+                        if action_by_uid.get(r["source_record_id"]) in {None, "REVIEW"}
+                        and r.get("resolution_status") == "pending_review"
+                    ) + sum(1 for r in src_records if action_by_uid.get(r["source_record_id"]) == "REVIEW")
+                    # avoid double count — recompute cleanly
+                    count = sum(1 for r in src_records if (action_by_uid.get(r["source_record_id"]) or (
+                        "REVIEW" if r.get("resolution_status") == "pending_review" else None
+                    )) == "REVIEW")
+                segments.append({"status": action, "label": action.replace("_", " ").title(), "count": count})
             rows.append({
                 "source_id": source["source_id"],
-                "source_name": source["source_name"],
+                "source_name": source_label(source["source_id"]),
                 "segments": segments,
             })
         total = sum(seg["count"] for row in rows for seg in row["segments"])
         return {
             "rows": rows,
             "applied_filters": {"source_id": source_id, "specialty": specialty, "state": state},
-            "text_summary": f"Resolution status counts across {len(rows)} sources ({total} scoped source records).",
+            "text_summary": f"Final actions across {len(rows)} sources ({total} counted decisions).",
+            "legend": [{"key": a, "label": a.replace("_", " ").title()} for a in action_keys],
         }

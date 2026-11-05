@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { fetchDoctors, exportDoctorsUrl } from '../api/doctors';
 import { fetchReferenceData } from '../api/dashboard';
 import type { DoctorListItem } from '../api/contracts';
@@ -15,7 +14,6 @@ import { formatDate } from '../utils/dateUtils';
 
 export function GoldenRecordsPage() {
   const { get, setMany } = useUrlState();
-  const navigate = useNavigate();
   const scrollRef = useRef<number>(0);
   const doctorId = get('doctor_id');
   const tab = get('tab', 'summary');
@@ -63,17 +61,19 @@ export function GoldenRecordsPage() {
     <div className="space-y-4">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">Golden Doctor Records</h1>
+          <h1 className="text-2xl font-semibold">Golden Records</h1>
           <p className="mt-1 text-sm text-muted">
-            Trusted profiles consolidating linked identity evidence. Total profiles: {listQuery.data?.total ?? '—'}
+            Clean master profiles resolved to people and NPIs. Total: {listQuery.data?.total ?? '—'}
           </p>
         </div>
-        <a
-          href={exportDoctorsUrl()}
-          className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-white hover:bg-accent"
-        >
-          Export CSV
-        </a>
+        <div className="flex flex-wrap gap-2">
+          <a href={exportDoctorsUrl()} className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-white hover:bg-accent">
+            Export CSV
+          </a>
+          <a href={exportDoctorsUrl().replace('/doctors', '/npi_mapping')} className="rounded-md border border-border px-3 py-2 text-sm">
+            Source→NPI mapping
+          </a>
+        </div>
       </header>
 
       <FilterBar>
@@ -134,50 +134,45 @@ export function GoldenRecordsPage() {
             onRowClick={openDoctor}
             empty={<EmptyState title="No doctors match these filters" description="Try clearing search or filters." />}
             columns={[
-              { key: 'name', header: 'Doctor name', render: (r) => <span className="font-medium">{r.preferred_name}</span> },
-              { key: 'id', header: 'Master ID', render: (r) => r.doctor_id },
-              { key: 'specialty', header: 'Specialty', render: (r) => r.specialty || '—' },
               {
-                key: 'aff',
-                header: 'Current affiliation',
+                key: 'name',
+                header: 'Doctor name',
                 render: (r) => (
-                  <span>
-                    {r.primary_affiliation || '—'}
-                    {r.affiliation_count > 1 ? (
-                      <button
-                        type="button"
-                        className="ml-2 text-xs text-primary hover:underline"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setMany({ doctor_id: r.doctor_id, tab: 'summary' });
-                        }}
-                      >
-                        +{r.affiliation_count - 1}
-                      </button>
-                    ) : null}
-                  </span>
+                  <div>
+                    <div className="font-medium">{r.preferred_name}</div>
+                    {r.badge ? <span className="mt-1 inline-block rounded bg-slate-100 px-1.5 py-0.5 text-[10px] uppercase">{r.badge}</span> : null}
+                  </div>
                 ),
               },
-              { key: 'loc', header: 'Location', render: (r) => [r.city, r.state].filter(Boolean).join(', ') || '—' },
-              { key: 'linked', header: 'Linked records', render: (r) => r.linked_record_count },
-              { key: 'pending', header: 'Pending items', render: (r) => r.pending_item_count },
-              { key: 'updated', header: 'Updated', render: (r) => formatDate(r.updated_at) },
+              { key: 'npi', header: 'NPI', render: (r) => r.official_npi || '—' },
+              { key: 'npi_status', header: 'NPI status', render: (r) => r.npi_status },
+              { key: 'id', header: 'Master ID', render: (r) => r.master_id || r.doctor_id },
+              { key: 'aliases', header: 'Aliases', render: (r) => (r.alias_count ? `${r.alias_count}` : '—') },
+              { key: 'cred', header: 'Credential', render: (r) => r.credential || '—' },
+              { key: 'specialty', header: 'Specialty', render: (r) => r.specialty || '—' },
+              { key: 'aff', header: 'Current organization', render: (r) => r.primary_affiliation || '—' },
+              { key: 'loc', header: 'Location', render: (r) => r.location || [r.city, r.state].filter(Boolean).join(', ') || '—' },
+              { key: 'lic', header: 'License states', render: (r) => (r.license_states || []).join(', ') || '—' },
               {
-                key: 'open',
-                header: 'Open',
+                key: 'linked',
+                header: 'Linked records',
                 render: (r) => (
                   <button
                     type="button"
                     className="text-primary hover:underline"
                     onClick={(e) => {
                       e.stopPropagation();
-                      navigate(`/golden-records/${r.doctor_id}`);
+                      scrollRef.current = window.scrollY;
+                      setMany({ doctor_id: r.doctor_id, tab: 'linked' });
                     }}
                   >
-                    Open
+                    {r.linked_record_count}
                   </button>
                 ),
               },
+              { key: 'sources', header: 'Source count', render: (r) => r.source_count ?? '—' },
+              { key: 'issues', header: 'Open issues', render: (r) => r.open_issues ?? r.pending_item_count },
+              { key: 'updated', header: 'Last updated', render: (r) => formatDate(r.updated_at) },
             ]}
           />
           <div className="flex items-center justify-between text-sm">

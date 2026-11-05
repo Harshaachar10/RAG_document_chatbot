@@ -1,0 +1,48 @@
+﻿Account_ID,Account_Name,NPI_vod,Specialty,Primary_Parent,Address,City,St,Zip,Phone,Email,State_License,Rep_ID,Last_Modified
+CRM-7781,"Dr. Sarah Lee, MD",,Hem/Onc,Northview Oncology Associates,100 Example Ave,Chicago,IL,60601,(312) 555-0142,,,R-22,03/14/2023
+CRM-7802,Sarah Lee-Kim,1309803819,Medical Oncology,Lakeshore Cancer Institute,200 Sample Blvd,Chicago,IL,60611,312.555.0143,s.leekim@example.test,IL-991011,R-22,05/02/2026
+CRM-8110,"Bill Harris Jr., MD",,Hem/Onc,Harborlight CC,400 Example Pkwy,Boston,MA,02114,617-555-0120,wharrisjr@example.test,,R-31,11/20/2025
+CRM-8111,William Harris MD,,Hem/Onc,Harborlight CC,400 Example Pkwy,Boston,MA,02114,617-555-0120,,,R-31,06/09/2022
+CRM-8112,"Harris Sr, William",1910299423,Hematology Oncology,Harborlight Cancer Center,400 Example Pkwy,Boston,MA,02114,617-555-0120,,,R-14,09/18/2024
+CRM-9001,Miguel Alvarez MD,,Hematology,Biscayne Hematology Group,600 Example Dr,Miami,FL,33131,305-555-0140,malvarez@example.test,FL-312102,R-31,01/15/2025
+CRM-9002,"Mike Alvarez, M.D.",,Heme,Savannah Coastal Cancer Clinic,610 Sample Ln,Savannah,GA,31401,912-555-0141,,GA-448854,R-47,08/27/2025
+CRM-9100,ZHANG WEI MD PHD,,Thoracic Onc,Cascade Thoracic Oncology,700 Test Way,Seattle,WA,98104,206-555-0150,,,R-08,04/11/2024
+CRM-9200,Robert Nowak,,Oncology,Twin Rivers Cancer Care,1000 Test Blvd,Minneapolis,MN,55401,612-555-0170,,,R-19,10/03/2023
+CRM-9201,Dr. Nowak,,,Twin Rivers Cancer Care,,Minneapolis,MN,,612-555-0170,,,R-19,10/03/2023
+CRM-9300,Aisha Rehman,1671942492,Oncology,Prairie Oncology Partners,800 Example Ct,Dallas,TX,75201,214-555-0160,,,R-05,07/21/2025
+CRM-9400,Priya Sharma,,Breast Oncology,Peachtree Ridge Oncology,500 Sample St,Atlanta,GA,30309,404-555-0131,,,R-27,02/14/2026
+CRM-9401,Priya Sharma,,Oncology,,,Atlanta,GA,,,,,R-27,02/14/2026
+CRM-9600,John Smith MD,,Medical Oncology,Lakefront Hematology Oncology,1600 Sample Cir,Cleveland,OH,44113,216-555-0112,,,R-50,06/15/2024
+CRM-9601,John Smith,,Hematology Oncology,Scioto Valley Oncology,1700 Test St,Columbus,OH,43215,614-555-0113,,,R-50,06/15/2024
+CRM-9602,John Smith,,Oncology,,,,OH,,,,,R-50,06/15/2024
+CRM-9603,Karen Whitfield,1687630180,Medical Oncology,Piedmont Bay Cancer Care,1800 Example Ave,Charlotte,NC,28202,704-555-0114,,,R-50,11/02/2022
+CRM-9604,Karen Whitfield,1687630180,Medical Oncology,Tidewater Oncology Group,1900 Sample Rd,Norfolk,VA,23510,757-555-0115,,,R-50,08/19/2024
+CRM-9605,Kate Whitfield,,Oncology,Tidewater Oncology Group,1900 Sample Rd,Norfolk,VA,23510,757-555-0115,,,R-50,03/01/2025
+CRM-9606,Grace Park,1585664414,Breast Oncology,Evergreen Breast Center,2100 Example Ln,Portland,OR,97204,503-555-0117,,,R-50,06/15/2024
+CRM-9607,Grace Park,1370429593,Medical Oncology,Evergreen Breast Center,2100 Example Ln,Portland,OR,97204,503-555-0117,,OR-439634,R-50,06/15/2024
+CRM-9608,David Park,1585664414,Hematology Oncology,Evergreen Breast Center,2100 Example Ln,Portland,OR,97204,503-555-0117,,OR-137541,R-50,06/15/2024
+CRM-9609,"Renee Tran, NP",,Nurse Practitioner,Bluegrass Oncology Clinic,2200 Sample Dr,Louisville,KY,40202,502-555-0118,,,R-50,06/15/2024
+CRM-9610,José Hernández,,Medical Oncology,Alamo Heights Oncology,1500 Example Loop,San Antonio,TX,78205,210-555-0111,,,R-50,06/15/2024
+CRM-9611,JosÃ© HernÃ¡ndez,,Oncology,Alamo Heights Oncology,1500 Example Loop,San Antonio,TX,78205,210-555-0111,,,R-50,06/15/2024
+CRM-9612,Kate O Brien,,Oncology,Piedmont Bay Cancer Care,1800 Example Ave,Charlotte,NC,28202,704-555-0114,,,R-50,06/15/2024
+CRM-9613,Anil Menon,1271 768 321,Medical Oncology,Hudson Crest Oncology,2000 Test Ave,Albany,NY,12207,518-555-0116,,,R-50,06/15/2024
+CRM-9614,Wei Zhang,1.06087E+09,Medical Oncology,Cascade Thoracic Oncology,700 Test Way,Seattle,WA,98104,206-555-0150,,,R-50,06/15/2024
+CRM-9615,Thomas Grant,NPI: 1759922929,Medical Oncology,Front Range Oncology,900 Sample Rd,Denver,CO,80202,303-555-0190,,,R-50,06/15/2024
+CRM-9616,Lauren Okafor,0000000000,Medical Oncology,Mesa Vista Cancer Center,1100 Example St,Phoenix,AZ,85004,602-555-0180,,,R-50,06/15/2024
+CRM-9617,Sara Li,N/A,Medical Oncology,Westloop Cancer Care,1200 Sample Ave,Chicago,IL,60607,312-555-0177,,,R-50,06/15/2024
+CRM-9618,Robert Nowak,119682529,Medical Oncology,Twin Rivers Cancer Care,1000 Test Blvd,Minneapolis,MN,55401,612-555-0170,,,R-50,06/15/2024
+CRM-9619,Emily Nowak,,Hematology Oncology,Twin Rivers Cancer Care,1000 Test Blvd,Minneapolis,MN,55401,612-555-0170,,,R-50,06/15/2024
+CRM-9620,,1458829631,Medical Oncology,Piedmont Bay Cancer Care,1800 Example Ave,Charlotte,NC,28202,704-555-0114,,,R-50,06/15/2024
+CRM-9621,Lakeshore Cancer Institute,1427952209,Cancer Center,Lakeshore Cancer Institute,200 Sample Blvd,Chicago,IL,60611,312-555-0143,,,R-50,06/15/2024
+CRM-9622,Office Staff,,,Twin Rivers Cancer Care,1000 Test Blvd,Minneapolis,MN,55401,612-555-0170,,,R-50,06/15/2024
+CRM-9623,Anil Menon MD,1271768321,Medical Oncology,Hudson Crest Oncology,2000 Test Ave,Albany,NY,12207,518-555-0116,,,R-50,06/15/2024
+CRM-9623,Anil Menon MD,1271768321,Medical Oncology,Hudson Crest Oncology,2000 Test Ave,Albany,NY,12207,518-555-0116,,,R-50,06/15/2024
+CRM-9624,Thomas Grant,1759922929,Medical Oncology,Front Range Oncology,900 Sample Rd,Denver,CO,80202,303-555-0190,,,R-50,01/10/2024
+CRM-9624,Thomas Grant,1759922929,Pediatrics,Bayline Dermatology,300 Test Rd,Houston,TX,77002,713-555-0110,,,R-50,01/10/2024
+CRM-9625,John Smith,1567874528,Pediatrics,Lakefront Hematology Oncology,1600 Sample Cir,Cleveland,OH,44113,216-555-0112,,,R-50,06/15/2024
+CRM-9626,Sarah Lee-Kim,1309803819,Medical Oncology,Lakeshore Cancer Institute,"200 Sample Boulevard, Suite 5",Chicago,IL,60611-0005,312-555-0143,,,R-50,06/15/2024
+CRM-9627,William Harris Jr,,Hematology Oncology,Harborlight Cancer Center,400 Example Pkwy,Boston,MA,2114,617-555-0120,,,R-50,06/15/2024
+CRM-9628,Sara Li,1603219472,Medical Oncology,Westloop Cancer Care,1200 Sample Ave,Chicago,IL,60607,312-555-0177,,,R-50,01/01/2031
+CRM-9629,Robert Nowak,1196825297,Medical Oncology,Twin Rivers Cancer Care,1000 Test Blvd,Minneapolis,MN,55401,612-555-0170,,,R-50,13/45/2024
+CRM-9630,Katie O'Brien,1458829631,Medical Oncology,Piedmont Bay Cancer Care,1800 Example Ave,Charlotte,NC,28202,704-555-0114,,,R-50,06/15/2024
+CRM-9631,Mike Alvarez,1420493599,Hematology,Biscayne Hematology Group,600 Example Dr,Miami,FL,33131,305-555-0140,,,R-50,06/15/2024

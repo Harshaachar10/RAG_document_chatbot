@@ -9,10 +9,21 @@ from fastapi import BackgroundTasks
 from app.api.dependencies import get_ai_service, get_review_service
 from app.ai.service import AiService
 from app.schemas.ai import RefreshRequest
-from app.schemas.review import DecisionRequest, DecisionResponse, ReviewDetail
+from app.schemas.review import (
+    AssignmentRequest,
+    AssignmentResponse,
+    DecisionRequest,
+    DecisionResponse,
+    ReviewDetail,
+)
 from app.services.review_service import ReviewService
 
 router = APIRouter(prefix="/reviews", tags=["reviews"])
+
+
+@router.get("/reviewers", operation_id="listReviewers")
+def list_reviewers(service: ReviewService = Depends(get_review_service)) -> Dict[str, Any]:
+    return service.list_reviewers()
 
 
 @router.get("", operation_id="listReviews")
@@ -22,8 +33,8 @@ def list_reviews(
     case_type: Optional[str] = None,
     severity: Optional[str] = None,
     source_id: Optional[str] = None,
-    sort_by: str = "created_at",
-    sort_direction: str = "desc",
+    sort_by: str = "risk",
+    sort_direction: str = "asc",
     page: int = Query(1, ge=1),
     page_size: int = Query(25, ge=1, le=100),
     service: ReviewService = Depends(get_review_service),
@@ -68,3 +79,13 @@ def create_decision(
 ) -> DecisionResponse:
     result = service.decide(review_id, body.model_dump())
     return DecisionResponse(**result)
+
+
+@router.post("/{review_id}/assignment", response_model=AssignmentResponse, operation_id="assignReviewForHumanEvaluation")
+def assign_review(
+    review_id: str,
+    body: AssignmentRequest,
+    service: ReviewService = Depends(get_review_service),
+) -> AssignmentResponse:
+    result = service.assign_for_human_review(review_id, body.model_dump())
+    return AssignmentResponse(**result)

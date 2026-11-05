@@ -30,6 +30,12 @@ def client(tmp_path, monkeypatch):
     deps.get_quality_service.cache_clear()
     deps.get_export_service.cache_clear()
     deps.get_ai_service.cache_clear()
+    if hasattr(deps, "get_payment_service"):
+        deps.get_payment_service.cache_clear()
+    if hasattr(deps, "get_notes_service"):
+        deps.get_notes_service.cache_clear()
+    if hasattr(deps, "get_upload_service"):
+        deps.get_upload_service.cache_clear()
 
     monkeypatch.setenv("RUNTIME_DIRECTORY", str(runtime_dir))
     monkeypatch.setenv("ANALYSIS_MODE", "mock")

@@ -7,23 +7,24 @@ from typing import Any, Dict, List, Optional
 
 from app.core.exceptions import NotFoundError, ValidationAppError
 from app.core.settings import Settings
-from app.repositories.csv_repository import CsvDemoRepository
 from app.utils.dates import utc_now_iso
+from app.utils.links import is_linked_status
 
 
 STEPS = [
-    ("read_snapshots", "Read source snapshots"),
-    ("standardize", "Standardize example records"),
-    ("candidate_groups", "Load prepared candidate groups"),
-    ("evidence_preview", "Show simulated evidence assessments"),
-    ("assemble_profiles", "Assemble prepared golden profiles"),
-    ("prepare_reviews", "Prepare review cases"),
+    ("ingest", "Ingest heterogeneous source CSVs"),
+    ("standardize", "Standardize names, phones, dates, specialties"),
+    ("npi_check", "Validate NPIs and look up NPPES reference"),
+    ("candidates", "Block candidate pairs"),
+    ("score", "Score candidates with explainable weights"),
+    ("route", "Apply hard stops and route decisions"),
+    ("golden", "Assemble golden records"),
     ("complete", "Complete"),
 ]
 
 
 class RunService:
-    def __init__(self, repo: CsvDemoRepository, settings: Settings) -> None:
+    def __init__(self, repo: Any, settings: Settings) -> None:
         self.repo = repo
         self.settings = settings
         self._threads: Dict[str, threading.Thread] = {}
@@ -44,30 +45,29 @@ class RunService:
         for run in self.repo.state().get("demo_runs") or []:
             if run.get("run_id") == run_id:
                 return run
-        raise NotFoundError(f"Demo run {run_id} not found")
+        raise NotFoundError(f"Pipeline run {run_id} not found")
 
     def start_run(self) -> Dict[str, Any]:
-        # Do not overwrite approvals / create duplicate cases — demonstrate existing state
         counts = {
             "doctors": len(self.repo.list_doctors()),
             "source_records": len(self.repo.list_source_records()),
             "reviews": len(self.repo.list_reviews()),
             "linked_records": sum(
-                1 for l in self.repo.list_links() if l.get("link_status") == "accepted"
+                1 for l in self.repo.list_links() if is_linked_status(l.get("link_status"))
             ),
             "pending_reviews": sum(1 for r in self.repo.list_reviews() if r.get("status") == "pending"),
         }
-        run_id = f"DEMO-RUN-{uuid.uuid4().hex[:6].upper()}"
+        run_id = f"ID-RUN-{uuid.uuid4().hex[:6].upper()}"
         now = utc_now_iso()
         run = {
             "run_id": run_id,
-            "mode": "simulation",
+            "mode": "identity_pipeline",
             "status": "running",
             "current_step": STEPS[0][0],
             "completed_steps": 0,
             "total_steps": len(STEPS),
             "progress_percent": 0,
-            "message": "Simulation using prepared example outcomes; no live matching or AI service is called.",
+            "message": "Running historical identity resolution pipeline on source CSVs.",
             "started_at": now,
             "updated_at": now,
             "result_url": None,
@@ -88,8 +88,23 @@ class RunService:
 
     def _advance(self, run_id: str) -> None:
         delay = max(0, int(self.settings.demo_run_step_delay_ms)) / 1000.0
+        pipeline_counts: Dict[str, Any] = {}
         for idx, (step_key, label) in enumerate(STEPS):
             time.sleep(delay)
+            if step_key == "golden":
+                try:
+                    if hasattr(self.repo, "rerun_pipeline"):
+                        pipeline_counts = self.repo.rerun_pipeline() or {}
+                except Exception as exc:  # noqa: BLE001
+                    def fail(state: Dict[str, Any], err=str(exc)) -> None:
+                        for run in state.get("demo_runs") or []:
+                            if run.get("run_id") == run_id:
+                                run["status"] = "failed"
+                                run["errors"] = [err]
+                                run["updated_at"] = utc_now_iso()
+                                break
+                    self.repo.runtime.mutate(fail)
+                    return
 
             def mutator(state: Dict[str, Any], i=idx, key=step_key, lbl=label) -> None:
                 for run in state.get("demo_runs") or []:
@@ -102,13 +117,15 @@ class RunService:
                     run["progress_percent"] = int(round(100 * (i + 1) / len(STEPS)))
                     run["message"] = f"{lbl}."
                     run["updated_at"] = utc_now_iso()
+                    if pipeline_counts:
+                        run["result_counts"] = {
+                            **(run.get("result_counts") or {}),
+                            **{k: v for k, v in pipeline_counts.items() if isinstance(v, (int, float))},
+                        }
                     if i == len(STEPS) - 1:
                         run["status"] = "completed"
-                        run["result_url"] = "/sources?tab=processing"
-                        run["message"] = (
-                            "Simulation complete. Prepared example outcomes demonstrated; "
-                            "existing steward decisions were preserved."
-                        )
+                        run["result_url"] = "/golden-records"
+                        run["message"] = "Identity pipeline complete. Golden records and review queues refreshed."
                     break
 
             try:

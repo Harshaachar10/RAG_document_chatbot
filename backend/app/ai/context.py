@@ -11,7 +11,6 @@ import re
 from dataclasses import dataclass, field
 from typing import Any, Dict, Iterable, List, Optional, Sequence
 
-from app.repositories.csv_repository import CsvDemoRepository
 
 RECORD_FIELDS = (
     "source_record_id", "source_id", "record_kind", "recorded_name", "specialty",
@@ -39,7 +38,7 @@ class EvidencePack:
 
 
 def build_identity_pack(
-    repo: CsvDemoRepository,
+    repo: Any,
     record_ids: Sequence[str],
     *,
     prompt_digest: str,
@@ -87,7 +86,7 @@ def build_identity_pack(
 
 
 def build_change_pack(
-    repo: CsvDemoRepository,
+    repo: Any,
     record_ids: Sequence[str],
     *,
     prompt_digest: str,
@@ -119,7 +118,7 @@ def build_change_pack(
 
 
 def build_summary_pack(
-    repo: CsvDemoRepository,
+    repo: Any,
     doctor_id: str,
     *,
     prompt_digest: str,
@@ -237,7 +236,7 @@ def build_summary_pack(
 
 
 def build_review_pack(
-    repo: CsvDemoRepository,
+    repo: Any,
     review_id: str,
     *,
     prompt_digest: str,
@@ -297,7 +296,7 @@ def build_review_pack(
     return pack
 
 
-def _require_records(repo: CsvDemoRepository, record_ids: Sequence[str]) -> List[Dict[str, Any]]:
+def _require_records(repo: Any, record_ids: Sequence[str]) -> List[Dict[str, Any]]:
     from app.core.exceptions import NotFoundError, ValidationAppError
 
     if not record_ids:
@@ -329,14 +328,14 @@ def _public_evidence(row: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def _evidence_for(repo: CsvDemoRepository, record_ids: Iterable[str]) -> List[Dict[str, Any]]:
+def _evidence_for(repo: Any, record_ids: Iterable[str]) -> List[Dict[str, Any]]:
     wanted = set(record_ids)
     rows = [row for row in repo.list_evidence() if row.get("source_record_id") in wanted]
     rows.sort(key=lambda row: row.get("evidence_id") or "")
     return rows
 
 
-def _passages(repo: CsvDemoRepository, evidence: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def _passages(repo: Any, evidence: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
     passages = []
     seen = set()
     for evid in evidence:
@@ -365,7 +364,7 @@ def _passages(repo: CsvDemoRepository, evidence: Sequence[Dict[str, Any]]) -> Li
     return passages
 
 
-def _constraints_for_records(repo: CsvDemoRepository, record_ids: set) -> List[Dict[str, Any]]:
+def _constraints_for_records(repo: Any, record_ids: set) -> List[Dict[str, Any]]:
     rows = []
     for constraint in repo.list_constraints():
         if constraint.get("left_record_id") in record_ids or constraint.get("right_record_id") in record_ids:

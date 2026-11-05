@@ -21,17 +21,8 @@ export function AppLayout() {
           <div className="mt-2 inline-flex rounded-md bg-white/10 px-2 py-1 text-[11px] text-slate-200">
             Synthetic data
           </div>
-          <div className="mt-1 text-[11px] text-slate-300">
-            {health.isError
-              ? 'API unavailable'
-              : aiReady
-                ? 'Azure OpenAI configured for explicit analysis'
-                : missing.length
-                  ? `AI unavailable. Missing ${missing.join(', ')}`
-                  : 'Prepared profiles load without a model call'}
-          </div>
         </div>
-        <nav className="flex-1 space-y-1 px-2 py-4" aria-label="Primary">
+        <nav className="flex-1 space-y-1 overflow-y-auto px-2 py-4" aria-label="Primary">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             return (
@@ -51,8 +42,20 @@ export function AppLayout() {
             );
           })}
         </nav>
-        <div className="border-t border-white/10 px-4 py-3 text-[11px] text-slate-300">
-          Affine Analytics — Doctor Intelligence
+        <div className="border-t border-white/10 px-4 py-3 text-[11px] text-slate-300" aria-label="System status">
+          <div className="font-medium text-slate-200">System status</div>
+          <div className="mt-1">
+            API: {health.isError ? 'Unavailable' : 'Ready'}
+          </div>
+          <div className="mt-1">
+            LLM:{' '}
+            {aiReady
+              ? 'Available'
+              : missing.length
+                ? `Unavailable (${missing.length} settings missing)`
+                : 'Unavailable'}
+          </div>
+          <div className="mt-2 text-slate-400">Affine Analytics — Doctor Intelligence</div>
         </div>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">

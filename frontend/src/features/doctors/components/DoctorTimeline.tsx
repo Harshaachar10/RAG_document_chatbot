@@ -179,12 +179,16 @@ export function DoctorTimeline({
                 key={e.event_id}
                 className={`rounded-[12px] border bg-white p-4 shadow-sm ${
                   highlightEventId === e.event_id ? 'border-accent' : issue ? 'border-amber-300' : 'border-border'
-                }`}
+                } ${e.evidence_id ? 'cursor-pointer hover:border-primary' : ''}`}
+                onClick={() => {
+                  if (e.evidence_id) onOpenEvidence(e.evidence_id);
+                }}
               >
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
                     <div className="text-xs text-muted">
-                      {formatDate(e.date_label || e.document_date)} · {displayValue(e.date_meaning)}
+                      Document date: {formatDate(e.document_date || e.date_label)}
+                      {e.effective_date ? ` · Effective date: ${formatDate(e.effective_date)}` : ' · Effective date: not stated'}
                       {e.activity_label ? ` · ${e.activity_label}` : ''}
                     </div>
                     <div className="mt-1 flex flex-wrap items-center gap-2">
@@ -214,7 +218,10 @@ export function DoctorTimeline({
                     <button
                       type="button"
                       className="text-xs text-primary hover:underline"
-                      onClick={() => setExpanded((s) => ({ ...s, [e.event_id]: !open }))}
+                      onClick={(ev) => {
+                        ev.stopPropagation();
+                        setExpanded((s) => ({ ...s, [e.event_id]: !open }));
+                      }}
                     >
                       {open ? 'Collapse' : 'Expand'}
                     </button>
@@ -231,7 +238,14 @@ export function DoctorTimeline({
                     <div>Source record: {displayValue(e.source_record_id, '—')}</div>
                     <div className="md:col-span-2">Quotation: {displayValue(e.evidence_quotation, 'None')}</div>
                     {e.evidence_id ? (
-                      <button type="button" className="text-left text-sm font-medium text-primary hover:underline" onClick={() => onOpenEvidence(e.evidence_id!)}>
+                      <button
+                        type="button"
+                        className="text-left text-sm font-medium text-primary hover:underline"
+                        onClick={(ev) => {
+                          ev.stopPropagation();
+                          onOpenEvidence(e.evidence_id!);
+                        }}
+                      >
                         View evidence
                       </button>
                     ) : null}

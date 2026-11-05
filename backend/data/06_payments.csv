@@ -1,0 +1,18 @@
+﻿payment_id,recipient_npi,recipient_first,recipient_last,recipient_specialty,city,state,license_no,amount_usd,payment_date,nature_of_payment,filed_status
+P-3301,1848459461,Sarah,Lee,Oncology,Chicago,IL,,2500,2025-10-02,Speaker fee,Filed
+P-3302,1848459461,Sarah,Lee,Dermatology,Houston,TX,TX-381407,450,2025-03-03,Consulting,Filed
+P-3303,1576635514,Priya,Sharma,Medical Oncology,Atlanta,GA,GA-155336,1800,2026-01-08,Speaker fee,Pending
+P-3304,1576635514,Priya,Sharma,Medical Oncology,Atlanta,GA,GA-117018,85,2026-02-11,Food and beverage,Pending
+P-3305,1500605765,William,Harris Sr,Hem/Onc,Boston,MA,MA-992660,2200,2025-11-05,Consulting,Filed
+P-3306,1500605765,William,Harris Jr,Hem/Onc,Boston,MA,MA-855221,120,2026-04-24,Food and beverage,Pending
+P-3307,,Hans,Keller,Oncology,Dusseldorf,,,3000,2025-06-05,Speaker fee,Not reportable (assumed)
+P-3308,1229169267,Sarah,Lee,Oncology,Chicago,IL,,95,2025-09-19,Food and beverage,Filed
+P-3309,1420493599,Miguel,Alvarez,Hematology,Miami,FL,FL-312102,1500,2026-03-14,Consulting,Pending
+P-3310,1759922929,Thomas,Grant,Medical Oncology,Denver,CO,CO-892139,70,2026-05-20,Food and beverage,Pending
+P-3311,1567874528,John,Smith,Medical Oncology,Cleveland,OH,OH-799070,900,2025-05-14,Consulting,Filed
+P-3312,1567874528,John,Smith,Hem/Onc,Columbus,OH,OH-708931,1200,2025-05-15,Speaker fee,Filed
+P-3313,1687630180,Karen,Whitfield,Medical Oncology,Charlotte,NC,NC-649704,1000,2022-09-02,Speaker fee,Filed
+P-3314,1687630180,Karen,Whitfield,Medical Oncology,Norfolk,VA,VA-603345,75,2025-03-18,Food and beverage,Filed
+P-3315,1585664414,Grace,Park,Medical Oncology,Portland,OR,OR-439634,650,2025-10-20,Consulting,Filed
+P-3316,,Renee,Tran,Nurse Practitioner,Louisville,KY,KY-789545,60,2025-12-09,Food and beverage,Pending
+P-3317,1445071792,Harborlight Cancer Center,,Cancer Center,Boston,MA,,5000,2025-07-07,Grant,Filed

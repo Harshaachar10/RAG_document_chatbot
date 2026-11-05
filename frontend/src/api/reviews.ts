@@ -15,3 +15,21 @@ export function submitDecision(reviewId: string, body: DecisionRequest) {
     body: JSON.stringify(body),
   });
 }
+
+export function saveReviewAssignment(
+  reviewId: string,
+  body: {
+    assign: boolean;
+    assigned_reviewer?: string | null;
+    assignment_comment?: string | null;
+    expected_version: number;
+  },
+) {
+  return apiFetch<{ review: ReviewDetail; snapshot_version: number; audit_id: string }>(
+    `/reviews/${reviewId}/assignment`,
+    {
+      method: 'POST',
+      body: JSON.stringify(body),
+    },
+  );
+}

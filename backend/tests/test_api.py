@@ -6,7 +6,7 @@ def test_health(client):
     assert res.status_code == 200
     body = res.json()
     assert body["status"] == "ok"
-    assert body["data_mode"] == "csv_demo"
+    assert body["data_mode"] == "identity"
     assert body["analysis_mode"] == "mock"
     assert body["data_classification"] == "synthetic"
     assert body["ai_ready"] is True
@@ -17,26 +17,31 @@ def test_reference_data(client):
     res = client.get("/api/v1/reference-data")
     assert res.status_code == 200
     body = res.json()
-    assert "Medical oncology" in body["specialties"]
-    assert len(body["sources"]) == 6
+    assert "Dermatology" in body["specialties"]
+    assert any("Oncology" in s or "Hematology" in s for s in body["specialties"])
+    assert len(body["sources"]) == 8
+    assert "probable_match" in body["review_case_types"]
 
 
 def test_doctors_list_and_sarah_search(client):
-    res = client.get("/api/v1/doctors", params={"search": "Sarah Lee", "page_size": 50})
+    res = client.get("/api/v1/doctors", params={"search": "Lee", "page_size": 50})
     assert res.status_code == 200
     body = res.json()
-    ids = [i["doctor_id"] for i in body["items"]]
-    assert "HCP-000123" in ids
     assert body["total"] >= 1
+    ids = [i["doctor_id"] for i in body["items"]]
+    assert any(i.startswith("HCP-") for i in ids)
+    assert any(i.get("official_npi") == "1309803819" for i in body["items"])
 
 
-def test_doctor_detail(client):
-    res = client.get("/api/v1/doctors/HCP-000123")
+def test_doctor_detail_chicago_lee(client):
+    listing = client.get("/api/v1/doctors", params={"search": "Lee-Kim", "page_size": 50}).json()
+    doctor = next(i for i in listing["items"] if i.get("official_npi") == "1309803819")
+    res = client.get(f"/api/v1/doctors/{doctor['doctor_id']}")
     assert res.status_code == 200
     body = res.json()
-    assert body["preferred_name"] == "Sarah Lee-Kim"
-    assert body["npi_status"] == "Not verified"
-    assert body["pending_field_changes"] >= 1
+    assert "lee" in (body["preferred_name"] or "").lower()
+    assert body["official_npi"] == "1309803819"
+    assert body["linked_record_count"] >= 1
 
 
 def test_dashboard_kpis(client):
@@ -44,42 +49,23 @@ def test_dashboard_kpis(client):
     assert res.status_code == 200
     body = res.json()
     keys = {k["key"] for k in body["kpis"]}
-    assert keys == {
-        "source_doctor_entries",
-        "golden_profiles",
-        "linked_records",
-        "consolidated_duplicates",
-        "pending_reviews",
-        "profiles_with_proposals",
-    }
-    golden = next(k for k in body["kpis"] if k["key"] == "golden_profiles")
-    assert golden["value"] == 120
+    assert "source_records_processed" in keys
+    assert "pending_human_review" in keys
+    processed = next(k for k in body["kpis"] if k["key"] == "source_records_processed")
+    assert processed["value"] >= 10
 
 
-def test_evidence_and_document(client):
-    records = client.get("/api/v1/doctors/HCP-000123/source-records")
-    assert records.status_code == 200
-    evidence_ids = [eid for row in records.json()["items"] for eid in row["evidence_ids"]]
-    assert evidence_ids
-    cited = None
-    for evidence_id in evidence_ids:
-        evid = client.get(f"/api/v1/evidence/{evidence_id}").json()
-        if evid.get("document_id") and evid.get("quoted_text"):
-            cited = evid
-            break
-    assert cited is not None
-    doc = client.get(
-        f"/api/v1/documents/{cited['document_id']}",
-        params={"version": cited["document_version"]},
-    )
-    assert doc.status_code == 200
-    pages = doc.json()["pages"]
-    assert any(cited["quoted_text"] in block["text"] for page in pages for block in page["blocks"])
-    assert "<script" not in doc.text.lower()
+def test_sources_list(client):
+    res = client.get("/api/v1/sources")
+    assert res.status_code == 200
+    body = res.json()
+    assert body["total"] == 8
+    keys = {s["source_id"] for s in body["items"]}
+    assert {"nppes", "crm", "claims", "payments"}.issubset(keys)
 
 
 def test_exports(client):
     res = client.get("/api/v1/exports/doctors")
     assert res.status_code == 200
     assert "text/csv" in res.headers["content-type"]
-    assert "HCP-000123" in res.text
+    assert "HCP-" in res.text

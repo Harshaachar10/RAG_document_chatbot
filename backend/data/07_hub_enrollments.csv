@@ -1,0 +1,14 @@
+﻿enrollment_id,patient_token,prescriber_name,prescriber_npi,prescriber_phone,practice,city,state,enroll_date,product_code
+HUB-0001,TKN-D46C4F,Sara Lee,,,Lakeshore Cancer,Chicago,IL,20260310,SYN-INFUSION-A
+HUB-0002,TKN-44301F,Sara Li,1603219472,312-555-0177,Westloop Cancer Care,Chicago,IL,20251104,SYN-INFUSION-A
+HUB-0003,TKN-572429,Thomas Grant,,303-555-0190,Front Range Onc,Denver,CO,20251212,SYN-INFUSION-C
+HUB-0004,TKN-73FCFD,Aisha Rahman,1671942492,,Prairie Oncology,Dallas,TX,20260115,SYN-INFUSION-A
+HUB-0005,TKN-40BE16,Dr. Zhang,,206-555-0150,Cascade Thoracic,Seattle,WA,20260208,SYN-ORAL-B
+HUB-0006,TKN-F23BEF,P. Sharma,,,,Atlanta,GA,20260301,SYN-INFUSION-C
+HUB-0007,TKN-01EC54,R Nowak,,612-555-0170,Twin Rivers,Minneapolis,MN,20260119,SYN-ORAL-B
+HUB-0008,TKN-C731EC,Miguel Alvares,,305-555-0140,Biscayne Heme,Miami,FL,20260411,SYN-ORAL-D
+HUB-0009,TKN-E86E36,John Smith,,,Scioto Valley Oncology,Columbus,OH,20250520,SYN-ORAL-B
+HUB-0010,TKN-92F0A8,Karen Whitfeild,,757-555-0115,Tidewater Oncology,Norfolk,VA,20250601,SYN-INFUSION-A
+HUB-0011,TKN-F7F78C,Menon A,,518-555-0116,Hudson Crest,Albany,NY,20250715,SYN-ORAL-B
+HUB-0012,TKN-B87B9A,Grace Park,,503-555-0117,Evergreen Breast,Portland,OR,20250822,SYN-INFUSION-C
+HUB-0013,TKN-039EEC,,,503-555-0117,Evergreen Breast,Portland,OR,20250905,SYN-INFUSION-C

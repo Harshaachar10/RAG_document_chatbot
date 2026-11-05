@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional, Set
 
 from app.core.exceptions import ConflictError, NotFoundError, ValidationAppError
 from app.providers.mock_recommendations import MockRecommendationProvider
-from app.repositories.csv_repository import CsvDemoRepository
+from app.identity.labels import case_label, risk_rank, source_label
 from app.services.filtering import matches_search, paginate, sort_items
 from app.utils.dates import utc_now_iso
 from app.utils.links import is_linked_status
@@ -15,13 +15,20 @@ from app.utils.links import is_linked_status
 VALID_ACTIONS = {
     "possible_duplicate": {"link_records", "keep_separate", "defer"},
     "same_name_ambiguity": {"select_candidate", "leave_unresolved", "defer"},
-    "identifier_conflict": {"leave_unresolved", "defer"},
+    "identifier_conflict": {"leave_unresolved", "select_candidate", "defer"},
     "name_update": {"approve_update", "reject_update", "defer", "resume"},
     "address_update": {"approve_update", "reject_update", "defer", "resume"},
     "affiliation_update": {"approve_update", "reject_update", "defer", "resume"},
     "contact_update": {"approve_update", "reject_update", "defer", "resume"},
     "duplicate_ingestion": {"reject_update", "defer", "resume"},
     "link_correction": {"approve_update", "reject_update", "defer", "resume"},
+    # Identity pipeline queues — business actions
+    "probable_match": {"approve", "reject", "needs_more_information", "defer", "resume", "select_candidate", "leave_unresolved"},
+    "compliance_review": {"approve", "reject", "needs_more_information", "defer", "resume", "select_candidate", "leave_unresolved"},
+    "npi_assignment": {"approve", "reject", "needs_more_information", "defer", "resume", "leave_unresolved"},
+    "unmatched": {"approve", "reject", "needs_more_information", "defer", "resume", "select_candidate", "leave_unresolved"},
+    "not_a_person": {"approve", "reject", "defer", "resume", "leave_unresolved"},
+    "auto_link": {"approve", "reject", "defer", "resume"},
 }
 
 FIELD_UPDATE_NAMES = {
@@ -29,9 +36,30 @@ FIELD_UPDATE_NAMES = {
     "professional_email", "email", "professional_phone", "phone",
 }
 
+# No invented reviewer names — unassigned unless a real logged-in user is provided later.
+ASSIGNMENT_STATUSES = (
+    "unassigned",
+    "assigned_for_human_review",
+)
+
+VALID_DECISION_ACTIONS = {
+    "approve",
+    "reject",
+    "needs_more_information",
+    "defer",
+    "resume",
+    # legacy aliases still accepted
+    "select_candidate",
+    "leave_unresolved",
+    "link_records",
+    "keep_separate",
+    "approve_update",
+    "reject_update",
+}
+
 
 class ReviewService:
-    def __init__(self, repo: CsvDemoRepository, recommendations: MockRecommendationProvider) -> None:
+    def __init__(self, repo: Any, recommendations: MockRecommendationProvider) -> None:
         self.repo = repo
         self.recommendations = recommendations
 
@@ -84,27 +112,57 @@ class ReviewService:
             cand_names = []
             for c in candidates:
                 d = doctors.get(c.get("candidate_doctor_id") or "")
-                if d:
-                    cand_names.append(d.get("preferred_name"))
+                label = (d.get("preferred_name") if d else None) or c.get("target_label") or c.get("doctor_name")
+                if label:
+                    cand_names.append(label)
+            rec = records.get(review.get("source_record_id") or "")
+            doctor_name = (doctor.get("preferred_name") if doctor else None) or (
+                cand_names[0] if cand_names else None
+            ) or (rec.get("recorded_name") if rec else None)
             items.append({
                 "review_id": review["review_id"],
                 "doctor_id": review.get("doctor_id"),
-                "doctor_name": doctor.get("preferred_name") if doctor else None,
+                "doctor_name": doctor_name,
                 "case_type": review.get("case_type"),
+                "issue_type": case_label(review.get("case_type")),
                 "title": review.get("title"),
+                "question": review.get("title"),
                 "severity": review.get("severity"),
+                "risk": review.get("severity"),
                 "status": review.get("status"),
                 "source_record_id": review.get("source_record_id"),
+                "source_id": review.get("source_key") or (rec.get("source_id") if rec else None),
+                "source_label": review.get("source_label") or source_label((rec or {}).get("source_id")),
                 "candidate_doctor_id": review.get("candidate_doctor_id"),
                 "proposed_field": review.get("proposed_field"),
                 "proposed_value": review.get("proposed_value"),
+                "match_score": review.get("match_score") or review.get("pipeline_score"),
+                "recommended_action": review.get("recommended_action") or review.get("pipeline_action"),
                 "created_at": review.get("created_at"),
                 "updated_at": review.get("updated_at"),
                 "age_days": age_days,
-                "candidates_summary": ", ".join([n for n in cand_names if n]) or None,
+                "candidates_summary": ", ".join([n for n in cand_names if n]) or "No candidates",
+                "assigned_reviewer": review.get("assigned_reviewer") or "Unassigned",
+                "assignment_status": review.get("assignment_status") or "unassigned",
+                "assignment_comment": review.get("assignment_comment"),
+                "assigned_at": review.get("assigned_at"),
+                "_risk_key": risk_rank(
+                    review.get("case_type"), review.get("severity"), review.get("pipeline_action")
+                ),
             })
-        allow = {"created_at", "updated_at", "severity", "status", "case_type", "title", "review_id"}
-        items = sort_items(items, sort_by, sort_direction, allow, "review_id")
+            if sort_by == "risk" or sort_by == "created_at":
+                pass
+        if sort_by == "risk":
+            items.sort(key=lambda r: (*r.get("_risk_key", (9, 9)), r.get("created_at") or ""))
+            if sort_direction == "desc":
+                items.reverse()
+            for row in items:
+                row.pop("_risk_key", None)
+        else:
+            for row in items:
+                row.pop("_risk_key", None)
+            allow = {"created_at", "updated_at", "severity", "status", "case_type", "title", "review_id", "match_score"}
+            items = sort_items(items, sort_by, sort_direction, allow, "review_id")
         page_items, total = paginate(items, page, page_size)
         return {
             "items": page_items,
@@ -137,38 +195,19 @@ class ReviewService:
             d = doctors.get(c.get("candidate_doctor_id") or "")
             candidates.append({
                 "candidate_doctor_id": c.get("candidate_doctor_id"),
-                "doctor_name": d.get("preferred_name") if d else None,
-                "demo_score": c.get("demo_score"),
-                "evidence_summary": c.get("evidence_summary"),
+                "doctor_name": d.get("preferred_name") if d else (c.get("target_label")),
+                "demo_score": c.get("score") if c.get("score") is not None else c.get("demo_score"),
+                "evidence_summary": c.get("rationale") or c.get("evidence_summary"),
+                "target_id": c.get("target_id"),
+                "target_source": c.get("target_source"),
+                "hard_stops": c.get("hard_stops") or [],
+                "contributions": c.get("contributions") or [],
+                "rank": c.get("rank"),
             })
         source_record = records.get(review.get("source_record_id") or "")
         doctor = doctors.get(review.get("doctor_id") or "")
+        candidate_doctor = doctors.get(review.get("candidate_doctor_id") or "")
         recommendation = self._recommendation_payload(state, review)
-
-        comparison = {
-            "source_profile": source_record,
-            "doctor_profile": {
-                "doctor_id": review.get("doctor_id"),
-                "preferred_name": doctor.get("preferred_name") if doctor else None,
-                "specialty": doctor.get("specialty") if doctor else None,
-                "city": doctor.get("city") if doctor else None,
-                "state": doctor.get("state") if doctor else None,
-                "email": doctor.get("professional_email") if doctor else None,
-            },
-            "agreements": [],
-            "conflicts": [],
-        }
-        if source_record and doctor:
-            for field, left, right in [
-                ("name", source_record.get("recorded_name"), doctor.get("preferred_name")),
-                ("specialty", source_record.get("specialty"), doctor.get("specialty")),
-                ("email", source_record.get("email"), doctor.get("professional_email")),
-                ("state", source_record.get("state"), doctor.get("state")),
-            ]:
-                if left and right and str(left).lower() == str(right).lower():
-                    comparison["agreements"].append({"field": field, "value": left})
-                elif left and right:
-                    comparison["conflicts"].append({"field": field, "source": left, "doctor": right})
 
         evidence_rows = []
         for evid in state["evidence"].values():
@@ -177,6 +216,14 @@ class ReviewService:
         for ref in recommendation.get("evidence_refs") or []:
             if ref in state["evidence"] and state["evidence"][ref] not in evidence_rows:
                 evidence_rows.append(state["evidence"][ref])
+
+        comparison = self._build_comparison(
+            review=review,
+            source_record=source_record,
+            doctor=doctor,
+            candidate_doctor=candidate_doctor,
+            evidence_rows=evidence_rows,
+        )
 
         case_type = review.get("case_type")
         status = review.get("status")
@@ -220,6 +267,261 @@ class ReviewService:
             "impact": impact,
             "candidates": candidates,
             "current_state": current_state,
+            "assigned_reviewer": review.get("assigned_reviewer"),
+            "assignment_status": review.get("assignment_status") or "unassigned",
+            "assignment_comment": review.get("assignment_comment"),
+            "assigned_at": review.get("assigned_at"),
+            "available_reviewers": [],
+            "pipeline_action": review.get("pipeline_action"),
+            "pipeline_reason": review.get("pipeline_reason"),
+            "pipeline_score": review.get("pipeline_score"),
+            "queue": review.get("queue"),
+            "record_flags": review.get("record_flags") or [],
+            "npi_lookups": review.get("npi_lookups") or [],
+            "match_explanation": review.get("match_explanation") or candidates,
+            "recommended_action": review.get("recommended_action") or review.get("pipeline_action"),
+            "match_score": review.get("match_score") or review.get("pipeline_score"),
+            "source_label": review.get("source_label") or source_label(
+                (source_record or {}).get("source_id") if source_record else None
+            ),
+            "issue_type": case_label(case_type),
+            "raw_record": (source_record or {}).get("raw") or {},
+            "standardized_record": (source_record or {}).get("standardized") or {},
+        }
+
+    @staticmethod
+    def _norm(value: Any) -> str:
+        return str(value or "").strip().lower()
+
+    @staticmethod
+    def _present(value: Any) -> bool:
+        text = str(value or "").strip()
+        return bool(text) and text.lower() not in {"missing", "none", "n/a", "na", "unknown"}
+
+    def _doctor_npi(self, doctor: Optional[Dict[str, Any]]) -> Optional[str]:
+        if not doctor:
+            return None
+        return doctor.get("official_npi") or doctor.get("mock_npi_ref") or None
+
+    def _build_comparison(
+        self,
+        *,
+        review: Dict[str, Any],
+        source_record: Optional[Dict[str, Any]],
+        doctor: Optional[Dict[str, Any]],
+        candidate_doctor: Optional[Dict[str, Any]],
+        evidence_rows: List[Dict[str, Any]],
+    ) -> Dict[str, Any]:
+        doctor_npi = self._doctor_npi(doctor)
+        source_npi = (source_record or {}).get("provider_identifier")
+        identifier_kind = (source_record or {}).get("identifier_kind")
+        source_profile = {
+            **(source_record or {}),
+            "npi_display": source_npi if self._present(source_npi) else None,
+            "identifier_kind": identifier_kind,
+        }
+        doctor_profile = {
+            "doctor_id": (doctor or {}).get("doctor_id") or review.get("doctor_id"),
+            "preferred_name": (doctor or {}).get("preferred_name"),
+            "specialty": (doctor or {}).get("specialty"),
+            "city": (doctor or {}).get("city"),
+            "state": (doctor or {}).get("state"),
+            "email": (doctor or {}).get("professional_email"),
+            "phone": (doctor or {}).get("professional_phone"),
+            "npi_display": doctor_npi if self._present(doctor_npi) else None,
+            "npi_status": (doctor or {}).get("npi_status"),
+        }
+        candidate_profile = None
+        if candidate_doctor and candidate_doctor.get("doctor_id") != doctor_profile.get("doctor_id"):
+            candidate_profile = {
+                "doctor_id": candidate_doctor.get("doctor_id"),
+                "preferred_name": candidate_doctor.get("preferred_name"),
+                "specialty": candidate_doctor.get("specialty"),
+                "npi_display": self._doctor_npi(candidate_doctor),
+                "email": candidate_doctor.get("professional_email"),
+            }
+
+        field_pairs = [
+            ("name", "Name", (source_record or {}).get("recorded_name"), doctor_profile.get("preferred_name")),
+            ("npi", "NPI / provider identifier", source_npi, doctor_npi),
+            ("credential", "Credential", (source_record or {}).get("credential_reference"), None),
+            ("specialty", "Specialty", (source_record or {}).get("specialty"), doctor_profile.get("specialty")),
+            ("practice", "Practice / affiliation", (source_record or {}).get("practice_name"), None),
+            ("address", "Address", (source_record or {}).get("address_line"), None),
+            ("city", "City", (source_record or {}).get("city"), doctor_profile.get("city")),
+            ("state", "State", (source_record or {}).get("state"), doctor_profile.get("state")),
+            ("email", "Email", (source_record or {}).get("email"), doctor_profile.get("email")),
+            ("phone", "Phone", (source_record or {}).get("phone"), doctor_profile.get("phone")),
+        ]
+
+        field_assessments: List[Dict[str, Any]] = []
+        agreements: List[Dict[str, Any]] = []
+        conflicts: List[Dict[str, Any]] = []
+        missing: List[Dict[str, Any]] = []
+        uncertain: List[Dict[str, Any]] = []
+
+        for key, label, left, right in field_pairs:
+            left_present = self._present(left)
+            right_present = self._present(right)
+            status = "uncertain"
+            explanation = ""
+            if key == "npi":
+                kind = self._norm(identifier_kind)
+                if kind == "malformed" or (left_present and not str(left).replace("-", "").isalnum()):
+                    status = "conflict"
+                    explanation = (
+                        f"Submitted identifier “{left}” is malformed or incomplete "
+                        f"compared with the golden reference “{right or 'not recorded'}”."
+                    )
+                elif kind in {"missing", "absent"} or not left_present:
+                    status = "missing"
+                    explanation = (
+                        "This submission did not include an NPI / provider identifier. "
+                        f"Golden profile reference: {right or 'not recorded'}."
+                    )
+                elif left_present and right_present and self._norm(left) != self._norm(right):
+                    status = "conflict"
+                    explanation = (
+                        f"Submitted identifier “{left}” does not match the golden reference “{right}”."
+                    )
+                elif left_present and right_present:
+                    status = "match"
+                    explanation = "Submitted identifier matches the golden reference."
+                elif left_present and not right_present:
+                    status = "uncertain"
+                    explanation = "Identifier appears on the submission, but the golden profile has no verified NPI."
+            elif left_present and right_present and self._norm(left) == self._norm(right):
+                status = "match"
+                explanation = "Values match."
+            elif left_present and right_present:
+                status = "conflict"
+                explanation = f"Submission has “{left}” while the golden profile has “{right}”."
+            elif not left_present and right_present:
+                status = "missing"
+                explanation = f"Not provided on this submission. Golden profile has “{right}”."
+            elif left_present and not right_present:
+                status = "uncertain"
+                explanation = f"Provided on the submission (“{left}”), not confirmed on the golden profile."
+            else:
+                status = "uncertain"
+                explanation = "Neither side has a usable value."
+
+            # Only invent assessments from actual field values — skip pure-empty noise except NPI for identifier cases.
+            if key != "npi" and not left_present and not right_present:
+                continue
+
+            row = {
+                "field": key,
+                "label": label,
+                "status": status,
+                "source_value": left if left_present else None,
+                "doctor_value": right if right_present else None,
+                "explanation": explanation,
+            }
+            field_assessments.append(row)
+            if status == "match":
+                agreements.append({"field": key, "label": label, "value": left})
+            elif status == "conflict":
+                conflicts.append({"field": key, "label": label, "source": left, "doctor": right, "explanation": explanation})
+            elif status == "missing":
+                missing.append({"field": key, "label": label, "doctor": right, "explanation": explanation})
+            else:
+                uncertain.append({"field": key, "label": label, "source": left, "doctor": right, "explanation": explanation})
+
+        conflict_focus = None
+        title = (review.get("title") or "").lower()
+        case_type = review.get("case_type") or ""
+        if case_type == "identifier_conflict" or "npi" in title:
+            npi_row = next((r for r in field_assessments if r["field"] == "npi"), None)
+            conflict_focus = {
+                "kind": "identifier",
+                "label": review.get("title") or "Identifier conflict",
+                "supplied_identifier": source_npi if self._present(source_npi) else None,
+                "identifier_kind": identifier_kind,
+                "golden_identifier": doctor_npi if self._present(doctor_npi) else None,
+                "candidate_identifier": self._doctor_npi(candidate_doctor) if candidate_doctor else None,
+                "candidate_doctor_id": (candidate_doctor or {}).get("doctor_id"),
+                "candidate_name": (candidate_doctor or {}).get("preferred_name"),
+                "explanation": (npi_row or {}).get("explanation")
+                or "Inspect the submitted identifier against the golden reference and cited evidence.",
+                "evidence_ids": [e.get("evidence_id") for e in evidence_rows if e.get("evidence_id")],
+            }
+
+        return {
+            "source_profile": source_profile,
+            "doctor_profile": doctor_profile,
+            "candidate_profile": candidate_profile,
+            "field_assessments": field_assessments,
+            "agreements": agreements,
+            "conflicts": conflicts,
+            "missing": missing,
+            "uncertain": uncertain,
+            "conflict_focus": conflict_focus,
+            "submission_summary": {
+                "provided": [r["label"] for r in field_assessments if self._present(r.get("source_value"))],
+                "missing": [r["label"] for r in missing],
+                "conflicts": [r["label"] for r in conflicts],
+                "uncertain": [r["label"] for r in uncertain],
+            },
+        }
+
+    def list_reviewers(self) -> Dict[str, Any]:
+        return {"items": [], "note": "No named reviewers configured. Cases remain Unassigned."}
+
+    def assign_for_human_review(self, review_id: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+        assign = bool(payload.get("assign", True))
+        reviewer = (payload.get("assigned_reviewer") or "").strip()
+        comment = (payload.get("assignment_comment") or "").strip()
+        expected_version = payload.get("expected_version")
+
+        if assign and not reviewer:
+            raise ValidationAppError("assigned_reviewer is required when assigning")
+        if not assign:
+            reviewer = ""
+
+        def mutator(state: Dict[str, Any]) -> Dict[str, Any]:
+            review = state["reviews"].get(review_id)
+            if not review:
+                raise NotFoundError(f"Review {review_id} not found")
+            current_version = int(review.get("version") or 1)
+            if expected_version is not None and int(expected_version) != current_version:
+                raise ConflictError(
+                    "REVIEW_VERSION_CONFLICT",
+                    "This case has changed since it was loaded.",
+                    details={"expected_version": expected_version, "current_version": current_version},
+                )
+            # Assignment never auto-approves or notifies.
+            review["assigned_reviewer"] = reviewer or None
+            review["assignment_status"] = "assigned_for_human_review" if assign and reviewer else "unassigned"
+            review["assignment_comment"] = comment or None
+            review["assigned_at"] = utc_now_iso() if assign and reviewer else None
+            review["updated_at"] = utc_now_iso()
+            review["version"] = current_version + 1
+            state["reviews"][review_id] = review
+            audit_id = f"AUD-ASSIGN-{review_id}-{int(datetime.now(timezone.utc).timestamp())}"
+            state.setdefault("audit_events", {})[audit_id] = {
+                "audit_id": audit_id,
+                "doctor_id": review.get("doctor_id"),
+                "review_id": review_id,
+                "action": "human_evaluation_assignment",
+                "actor_label": "Demo Steward",
+                "summary": (
+                    f"Assigned to {reviewer} for human review"
+                    if assign and reviewer
+                    else "Cleared human evaluation assignment"
+                ),
+                "occurred_at": utc_now_iso(),
+                "is_seeded": False,
+            }
+            return {"audit_id": audit_id}
+
+        result = self.repo.runtime.mutate(mutator)
+        detail = self.get_review(review_id)
+        return {
+            "review": detail,
+            "changed_doctor_ids": [detail["doctor_id"]] if detail.get("doctor_id") else [],
+            "snapshot_version": self.repo.snapshot_version(),
+            "audit_id": result["audit_id"],
         }
 
     def _describe_impact(self, case_type: str) -> List[str]:
@@ -261,14 +563,15 @@ class ReviewService:
                 "evidence_display": analysis.get("evidence_display") or [],
             }
         return {
-            "label": "Prepared result",
-            "origin": "prepared_demo",
-            "summary": (
-                "This case was supplied in the prepared demo dataset. "
-                "It is not a live model recommendation and it is not an approved fact by itself."
-            ),
+            "label": "Identity pipeline result",
+            "origin": "identity_pipeline",
+            "summary": review.get("pipeline_reason")
+            or "Routed by the historical identity resolution pipeline. Confirm or override before changing golden records.",
             "proposed_field": review.get("proposed_field"),
             "proposed_value": review.get("proposed_value"),
+            "pipeline_action": review.get("pipeline_action"),
+            "pipeline_score": review.get("pipeline_score"),
+            "queue": review.get("queue"),
         }
 
     def decide(self, review_id: str, payload: Dict[str, Any]) -> Dict[str, Any]:
@@ -380,6 +683,26 @@ class ReviewService:
                     changed_doctor_ids.add(did)
                 review["status"] = "rejected"
                 decision_label = "rejected"
+            elif action == "approve":
+                target = selected_doctor_id or review.get("doctor_id") or review.get("candidate_doctor_id")
+                if target:
+                    self._link_unassigned(state, review, target, now)
+                    changed_doctor_ids.add(target)
+                elif review.get("case_type") == "compliance_review":
+                    # Compliance approve = acknowledge proposed correction without changing filed payment values
+                    self._mark_source_status(state, review.get("source_record_id"), "linked", review.get("doctor_id"))
+                else:
+                    raise ValidationAppError("selected_doctor_id is required to approve a match")
+                review["status"] = "approved"
+                decision_label = "approved"
+            elif action == "reject":
+                self._mark_source_status(state, review.get("source_record_id"), "unresolved", None)
+                review["status"] = "rejected"
+                decision_label = "rejected"
+            elif action == "needs_more_information":
+                review["status"] = "deferred"
+                review["needs_more_information"] = True
+                decision_label = "needs_more_information"
             else:
                 raise ValidationAppError(f"Unsupported action {action}")
 
@@ -415,7 +738,7 @@ class ReviewService:
                 "doctor_id": doctor_for_event,
                 "review_id": review_id,
                 "action": action,
-                "actor_label": "Demo Steward",
+                "actor_label": "Steward",
                 "summary": comment or f"{action} on {review_id}",
                 "occurred_at": now,
                 "is_seeded": False,

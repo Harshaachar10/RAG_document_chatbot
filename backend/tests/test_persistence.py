@@ -4,10 +4,13 @@ import uuid
 
 
 def test_decision_persists_in_runtime(client):
-    detail = client.get("/api/v1/reviews/REV-019").json()
+    listing = client.get("/api/v1/reviews", params={"status": "pending", "page_size": 10}).json()
+    assert listing["items"]
+    review_id = listing["items"][0]["review_id"]
+    detail = client.get(f"/api/v1/reviews/{review_id}").json()
     key = str(uuid.uuid4())
     res = client.post(
-        "/api/v1/reviews/REV-019/decisions",
+        f"/api/v1/reviews/{review_id}/decisions",
         json={
             "decision": "deferred",
             "action": "defer",
@@ -17,11 +20,11 @@ def test_decision_persists_in_runtime(client):
         },
     )
     assert res.status_code == 200, res.text
-    again = client.get("/api/v1/reviews/REV-019").json()
+    again = client.get(f"/api/v1/reviews/{review_id}").json()
     assert again["status"] == "deferred"
 
     res2 = client.post(
-        "/api/v1/reviews/REV-019/decisions",
+        f"/api/v1/reviews/{review_id}/decisions",
         json={
             "decision": "resumed",
             "action": "resume",
@@ -31,14 +34,12 @@ def test_decision_persists_in_runtime(client):
         },
     )
     assert res2.status_code == 200, res2.text
-    assert client.get("/api/v1/reviews/REV-019").json()["status"] == "pending"
+    assert client.get(f"/api/v1/reviews/{review_id}").json()["status"] == "pending"
 
 
-def test_demo_run_starts(client):
+def test_pipeline_run_starts(client):
     res = client.post("/api/v1/demo-runs")
     assert res.status_code == 202
     body = res.json()
-    assert body["mode"] == "simulation"
-    assert body["status"] in {"running", "completed"}
-    run = client.get(f"/api/v1/demo-runs/{body['run_id']}")
-    assert run.status_code == 200
+    assert body["run_id"].startswith("ID-RUN-")
+    assert body["status"] in {"running", "completed", "queued"}

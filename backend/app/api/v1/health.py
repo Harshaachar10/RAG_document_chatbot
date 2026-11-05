@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+from typing import Any
+
 from fastapi import APIRouter, Depends
 
 from app.api.dependencies import get_repository
 from app.core.settings import Settings, get_settings
-from app.repositories.csv_repository import CsvDemoRepository
 from app.schemas.common import HealthResponse, ReferenceDataResponse
 
 router = APIRouter(tags=["health"])
@@ -13,13 +14,15 @@ router = APIRouter(tags=["health"])
 @router.get("/health", response_model=HealthResponse, operation_id="getHealth")
 def get_health(
     settings: Settings = Depends(get_settings),
-    repo: CsvDemoRepository = Depends(get_repository),
+    repo: Any = Depends(get_repository),
 ) -> HealthResponse:
     manifest = repo.manifest()
     sources = repo.list_sources()
     dataset_updated_at = manifest.get("generated_at")
     if not dataset_updated_at and sources:
         dataset_updated_at = max((s.get("updated_at") or "" for s in sources), default=None)
+    run = (repo.state().get("pipeline_run") or {})
+    dataset_updated_at = dataset_updated_at or run.get("finished_at")
     return HealthResponse(
         status="ok",
         version=settings.app_version,
@@ -35,7 +38,7 @@ def get_health(
 
 
 @router.get("/reference-data", response_model=ReferenceDataResponse, operation_id="getReferenceData")
-def get_reference_data(repo: CsvDemoRepository = Depends(get_repository)) -> ReferenceDataResponse:
+def get_reference_data(repo: Any = Depends(get_repository)) -> ReferenceDataResponse:
     doctors = repo.list_doctors()
     specialties = sorted({d.get("specialty") for d in doctors if d.get("specialty")})
     states = sorted({d.get("state") for d in doctors if d.get("state")})
@@ -47,22 +50,33 @@ def get_reference_data(repo: CsvDemoRepository = Depends(get_repository)) -> Ref
         specialties=specialties,
         states=states,
         sources=sources,
-        review_statuses=["pending", "deferred", "completed"],
+        review_statuses=["pending", "deferred", "completed", "resolved"],
         review_case_types=[
+            "probable_match",
+            "compliance_review",
             "possible_duplicate",
             "same_name_ambiguity",
             "identifier_conflict",
-            "name_update",
-            "address_update",
-            "affiliation_update",
-            "contact_update",
-            "duplicate_ingestion",
-            "link_correction",
+            "npi_assignment",
+            "unmatched",
+            "not_a_person",
         ],
         severities=["low", "medium", "high", "critical"],
         resolution_statuses=[
-            "linked", "review_required", "unresolved", "identifier_conflict", "duplicate_ingestion",
+            "linked",
+            "pending_review",
+            "unresolved",
+            "rejected",
+            "informational",
         ],
-        record_kinds=["identity_entry", "supporting_transaction", "note_observation"],
+        record_kinds=[
+            "legacy_master",
+            "crm",
+            "claims",
+            "events",
+            "payments",
+            "hub",
+            "notes",
+        ],
         defaults={"page_size": 25, "sort_by": "preferred_name", "sort_direction": "asc"},
     )

@@ -21,6 +21,10 @@ class ReviewListItem(BaseModel):
     updated_at: Optional[str] = None
     age_days: Optional[int] = None
     candidates_summary: Optional[str] = None
+    assigned_reviewer: Optional[str] = None
+    assignment_status: Optional[str] = None
+    assignment_comment: Optional[str] = None
+    assigned_at: Optional[str] = None
 
 
 class ReviewCandidate(BaseModel):
@@ -52,6 +56,11 @@ class ReviewDetail(BaseModel):
     impact: Dict[str, Any] = Field(default_factory=dict)
     candidates: List[ReviewCandidate] = Field(default_factory=list)
     current_state: Dict[str, Any] = Field(default_factory=dict)
+    assigned_reviewer: Optional[str] = None
+    assignment_status: Optional[str] = None
+    assignment_comment: Optional[str] = None
+    assigned_at: Optional[str] = None
+    available_reviewers: List[str] = Field(default_factory=list)
 
 
 class DecisionRequest(BaseModel):
@@ -64,6 +73,20 @@ class DecisionRequest(BaseModel):
 
 
 class DecisionResponse(BaseModel):
+    review: ReviewDetail
+    changed_doctor_ids: List[str] = Field(default_factory=list)
+    snapshot_version: int
+    audit_id: str
+
+
+class AssignmentRequest(BaseModel):
+    assign: bool = True
+    assigned_reviewer: Optional[str] = None
+    assignment_comment: Optional[str] = None
+    expected_version: int
+
+
+class AssignmentResponse(BaseModel):
     review: ReviewDetail
     changed_doctor_ids: List[str] = Field(default_factory=list)
     snapshot_version: int

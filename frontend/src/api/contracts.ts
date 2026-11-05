@@ -56,9 +56,12 @@ export interface KpiCard {
 export interface DashboardSummary {
   dataset_updated_at?: string | null;
   last_simulated_run_at?: string | null;
+  last_run_status?: string | null;
+  view?: string | null;
   snapshot_version: number;
   applied_filters: Record<string, unknown>;
   kpis: KpiCard[];
+  scorecard_available?: boolean;
   priority_reviews: Array<Record<string, unknown>>;
   recent_changes: Array<Record<string, unknown>>;
   source_coverage: Array<Record<string, unknown>>;
@@ -69,10 +72,11 @@ export interface SourceBreakdownResponse {
   rows: Array<{
     source_id: string;
     source_name: string;
-    segments: Array<{ status: string; count: number }>;
+    segments: Array<{ status: string; count: number; label?: string }>;
   }>;
   applied_filters: Record<string, unknown>;
   text_summary: string;
+  legend?: Array<{ key: string; label: string }>;
 }
 
 export interface DoctorListItem {
@@ -83,11 +87,21 @@ export interface DoctorListItem {
   affiliation_count: number;
   city?: string | null;
   state?: string | null;
+  location?: string | null;
   linked_record_count: number;
   pending_item_count: number;
+  open_issues?: number;
   identity_status?: string | null;
   updated_at?: string | null;
   npi_status: string;
+  official_npi?: string | null;
+  master_id?: string | null;
+  aliases?: string[];
+  alias_count?: number;
+  credential?: string | null;
+  license_states?: string[];
+  source_count?: number;
+  badge?: string | null;
 }
 
 export interface DoctorSummary {
@@ -162,6 +176,8 @@ export interface SourceRecordItem {
   email?: string | null;
   phone?: string | null;
   credential_reference?: string | null;
+  provider_identifier?: string | null;
+  identifier_kind?: string | null;
   document_id?: string | null;
   record_date?: string | null;
   submitted_at?: string | null;
@@ -205,6 +221,10 @@ export interface ReviewListItem {
   updated_at?: string | null;
   age_days?: number | null;
   candidates_summary?: string | null;
+  assigned_reviewer?: string | null;
+  assignment_status?: string | null;
+  assignment_comment?: string | null;
+  assigned_at?: string | null;
 }
 
 export interface ReviewDetail {
@@ -229,6 +249,18 @@ export interface ReviewDetail {
   impact: Record<string, unknown>;
   candidates: Array<Record<string, unknown>>;
   current_state: Record<string, unknown>;
+  assigned_reviewer?: string | null;
+  assignment_status?: string | null;
+  assignment_comment?: string | null;
+  assigned_at?: string | null;
+  available_reviewers?: string[];
+  pipeline_action?: string | null;
+  pipeline_reason?: string | null;
+  pipeline_score?: number | null;
+  queue?: string | null;
+  record_flags?: Array<{ code?: string; message?: string }>;
+  npi_lookups?: Array<Record<string, unknown>>;
+  match_explanation?: Array<Record<string, unknown>>;
 }
 
 export interface DecisionRequest {
@@ -298,6 +330,18 @@ export interface SourceSummary {
   identifier_conflict_count: number;
   completeness?: number | null;
   latest_data_date?: string | null;
+  npi_present?: number;
+  npi_valid?: number;
+  npi_missing?: number;
+  npi_wrong?: number;
+  npi_group?: number;
+  npi_deactivated?: number;
+  duplicates?: number;
+  resolved?: number;
+  in_review?: number;
+  unmatched?: number;
+  latest_valid_date?: string | null;
+  metric_links?: Record<string, string>;
 }
 
 export interface DemoRun {

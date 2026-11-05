@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-LINKED_STATUSES = frozenset({"linked", "accepted"})
+LINKED_STATUSES = frozenset({"linked", "accepted", "auto_linked", "confirmed", "provisional"})
 
 
 def is_linked_status(value: Optional[str]) -> bool:

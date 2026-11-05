@@ -3,58 +3,25 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 
 from app.core.exceptions import NotFoundError, ValidationAppError
-from app.repositories.csv_repository import CsvDemoRepository
 from app.services.filtering import matches_search, paginate, sort_items
 from app.utils.csv_io import assert_safe_id
 
 
 class SourceService:
-    def __init__(self, repo: CsvDemoRepository) -> None:
+    def __init__(self, repo: Any) -> None:
         self.repo = repo
 
     def list_sources(self) -> Dict[str, Any]:
-        records = self.repo.list_source_records()
-        items = []
-        for source in self.repo.list_sources():
-            src_records = [r for r in records if r.get("source_id") == source["source_id"]]
-            counts = {
-                "linked": 0,
-                "pending": 0,
-                "unresolved": 0,
-                "review_required": 0,
-                "identifier_conflict": 0,
-            }
-            for r in src_records:
-                status = r.get("resolution_status") or ""
-                if status == "linked":
-                    counts["linked"] += 1
-                elif status == "unresolved":
-                    counts["unresolved"] += 1
-                elif status == "review_required":
-                    counts["review_required"] += 1
-                    counts["pending"] += 1
-                elif status == "identifier_conflict":
-                    counts["identifier_conflict"] += 1
-                    counts["pending"] += 1
-            filled = 0
-            total_fields = 0
-            for r in src_records:
-                for field in ("recorded_name", "specialty", "practice_name", "city", "state"):
-                    total_fields += 1
-                    if r.get(field):
-                        filled += 1
-            latest = max((r.get("record_date") or "" for r in src_records), default=None)
-            items.append({
-                **source,
-                "row_count": len(src_records),
-                "linked_count": counts["linked"],
-                "pending_count": counts["pending"],
-                "unresolved_count": counts["unresolved"],
-                "review_required_count": counts["review_required"],
-                "identifier_conflict_count": counts["identifier_conflict"],
-                "completeness": round(filled / total_fields, 3) if total_fields else None,
-                "latest_data_date": latest or source.get("updated_at"),
-            })
+        from app.services.source_metrics import enrich_source_metrics
+
+        items = enrich_source_metrics(self.repo)
+        for item in items:
+            item["linked_count"] = item.get("resolved") or 0
+            item["pending_count"] = item.get("in_review") or 0
+            item["unresolved_count"] = item.get("unmatched") or 0
+            item["review_required_count"] = item.get("in_review") or 0
+            item["identifier_conflict_count"] = item.get("npi_wrong") or 0
+            item["latest_data_date"] = item.get("latest_valid_date")
         return {
             "items": items,
             "total": len(items),

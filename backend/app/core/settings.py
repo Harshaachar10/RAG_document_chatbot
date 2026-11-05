@@ -21,10 +21,11 @@ class Settings(BaseSettings):
     app_name: str = "Doctor Intelligence"
     app_version: str = "1.0.0"
     api_prefix: str = "/api/v1"
-    data_mode: str = "csv_demo"
+    data_mode: str = "identity"
     # Explicit provider. Azure is the only live provider used by this app.
     analysis_mode: str = "azure"
-    csv_directory: str = "data/Doctor_Demo_CSV_Only/csv"
+    # Heterogeneous historical CSVs (01_nppes_reference.csv … 08_*.csv) live here.
+    csv_directory: str = "data"
     runtime_directory: str = "data/runtime"
     documents_directory: str = "data/documents"
     mock_directory: str = "data/mock"
@@ -46,6 +47,16 @@ class Settings(BaseSettings):
         ]
     )
     demo_run_step_delay_ms: int = 400
+    # Upload & Match
+    upload_directory: str = "data/uploads"
+    upload_max_bytes: int = 20_000_000
+    upload_retention_days: int = 90
+    upload_allow_llm_images: bool = False
+    upload_ocr_enabled: bool = True
+
+    @property
+    def upload_path(self) -> Path:
+        return (BACKEND_ROOT / self.upload_directory).resolve()
 
     @property
     def backend_root(self) -> Path:

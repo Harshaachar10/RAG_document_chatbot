@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-"""Validate the configured CSV directory. Does not read evaluation_only/."""
+"""Validate the historical identity CSV set under backend/data."""
 from __future__ import annotations
 
 import sys
@@ -8,23 +7,27 @@ from pathlib import Path
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(BACKEND_ROOT))
 
-from app.core.exceptions import DatasetValidationError  # noqa: E402
-from app.core.settings import get_settings  # noqa: E402
-from app.repositories.dataset_loader import dataset_error_lines, load_dataset  # noqa: E402
+from app.identity.config import DEFAULT_SOURCE_PROFILES  # noqa: E402
+from app.identity.ingest import ingest_all  # noqa: E402
+from app.identity.npi import build_nppes_index, luhn_valid_npi  # noqa: E402
+from app.identity.pipeline import run_identity_pipeline  # noqa: E402
 
 
 def main() -> int:
-    settings = get_settings()
-    try:
-        loaded = load_dataset(settings.csv_path)
-    except DatasetValidationError as exc:
-        print("CSV validation failed. No records were dropped.")
-        for line in dataset_error_lines(exc.errors):
-            print(line)
+    data_dir = BACKEND_ROOT / "data"
+    missing = [p.filename for p in DEFAULT_SOURCE_PROFILES.values() if not (data_dir / p.filename).exists()]
+    if missing:
+        print("Missing files:", ", ".join(missing))
         return 1
-    print(f"Validated {loaded.csv_directory}")
-    for name, count in sorted(loaded.row_counts.items()):
-        print(f"  {name}: {count}")
+    ingested = ingest_all(data_dir)
+    index = build_nppes_index(ingested["nppes_rows"])
+    bad = [n for n in index if not luhn_valid_npi(n)]
+    if bad:
+        print("Invalid NPPES NPIs:", bad)
+        return 1
+    result = run_identity_pipeline(data_dir)
+    print("OK ingest", ingested["counts"])
+    print("OK pipeline", result["counts"])
     return 0
 
 

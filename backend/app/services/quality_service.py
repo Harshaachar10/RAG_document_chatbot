@@ -2,11 +2,10 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
-from app.repositories.csv_repository import CsvDemoRepository
 from app.services.filtering import matches_search, paginate
 
 
-def _job_counts(repo: CsvDemoRepository) -> Dict[str, int]:
+def _job_counts(repo: Any) -> Dict[str, int]:
     counts = {"queued": 0, "preparing_evidence": 0, "calling_model": 0, "validating_response": 0, "completed": 0, "failed": 0, "interrupted": 0}
     for job in (repo.state().get("ai_jobs") or {}).values():
         status = job.get("status") or "queued"
@@ -15,7 +14,7 @@ def _job_counts(repo: CsvDemoRepository) -> Dict[str, int]:
 
 
 class QualityService:
-    def __init__(self, repo: CsvDemoRepository) -> None:
+    def __init__(self, repo: Any) -> None:
         self.repo = repo
 
     def summary(self) -> Dict[str, Any]:
@@ -72,10 +71,17 @@ class QualityService:
             "pending_review_volume": pending,
             "inconsistent_evidence_refs": inconsistent,
             "matching_accuracy_note": (
-                "Prepared demo linkages are precomputed. Live model output is a recommendation until a steward approves it. "
-                "Matching accuracy is not a calibrated probability."
+                "Matching accuracy scores are hidden unless an answer-key scorecard is available. "
+                "LLM output is a recommendation until a steward approves it."
             ),
             "ai_job_counts": _job_counts(self.repo),
+            "audit_events": sorted(
+                self.repo.list_audit(),
+                key=lambda a: a.get("occurred_at") or a.get("created_at") or "",
+                reverse=True,
+            )[:50],
+            "pipeline_runs": list(self.repo.state().get("demo_runs") or [])[:20],
+            "upload_batches": list(self.repo.state().get("upload_batches") or [])[:20],
             "drilldowns": {
                 "unresolved_href": "/sources?status=unresolved",
                 "conflicts_href": "/reviews?case_type=identifier_conflict&status=pending",

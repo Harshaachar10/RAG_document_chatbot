@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query  # noqa: F401 — Query used
 
 from app.api.dependencies import get_dashboard_service
 from app.schemas.dashboard import DashboardSummary, SourceBreakdownResponse
@@ -17,6 +17,7 @@ def dashboard_summary(
     specialty: Optional[str] = None,
     state: Optional[str] = None,
     review_state: Optional[str] = None,
+    view: Optional[str] = Query("historical"),
     service: DashboardService = Depends(get_dashboard_service),
 ) -> DashboardSummary:
     return DashboardSummary(**service.summary(
@@ -24,6 +25,7 @@ def dashboard_summary(
         specialty=specialty,
         state=state,
         review_state=review_state,
+        view=view,
     ))
 
 

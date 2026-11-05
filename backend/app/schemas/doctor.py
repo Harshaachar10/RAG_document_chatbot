@@ -18,6 +18,16 @@ class DoctorListItem(BaseModel):
     identity_status: Optional[str] = None
     updated_at: Optional[str] = None
     npi_status: str = "Not verified"
+    official_npi: Optional[str] = None
+    location: Optional[str] = None
+    badge: Optional[str] = None
+    open_issues: int = 0
+    source_count: int = 0
+    master_id: Optional[str] = None
+    credential: Optional[str] = None
+    license_states: List[str] = Field(default_factory=list)
+    aliases: List[str] = Field(default_factory=list)
+    alias_count: int = 0
 
 
 class DoctorSummary(BaseModel):
@@ -88,6 +98,8 @@ class SourceRecordItem(BaseModel):
     email: Optional[str] = None
     phone: Optional[str] = None
     credential_reference: Optional[str] = None
+    provider_identifier: Optional[str] = None
+    identifier_kind: Optional[str] = None
     document_id: Optional[str] = None
     record_date: Optional[str] = None
     submitted_at: Optional[str] = None

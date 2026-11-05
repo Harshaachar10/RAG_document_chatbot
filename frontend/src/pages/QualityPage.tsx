@@ -1,29 +1,23 @@
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
 import { getApiBaseUrl } from '../api/client';
-import { fetchAiJobs } from '../api/ai';
 import { fetchActivity, fetchQualitySummary } from '../api/sources';
 import { ErrorState } from '../components/ErrorState';
 import { FilterBar, FilterField, inputClass } from '../components/FilterBar';
 import { Skeleton } from '../components/Skeleton';
 import { useUrlState } from '../hooks/useUrlState';
 import { formatDateTime } from '../utils/dateUtils';
-import { displayValue, percent } from '../utils/formatters';
+import { displayValue } from '../utils/formatters';
 
 export function QualityPage() {
   const { get, setMany } = useUrlState();
-  const tab = get('tab', 'quality');
+  const tab = get('tab', 'audit');
   const search = get('search');
   const page = Number(get('page', '1'));
 
-  const jobsQuery = useQuery({
-    queryKey: ['ai-jobs'],
-    queryFn: ({ signal }) => fetchAiJobs(signal),
-  });
   const qualityQuery = useQuery({
     queryKey: ['quality'],
     queryFn: ({ signal }) => fetchQualitySummary(signal),
-    enabled: tab === 'quality',
+    enabled: tab === 'audit' || tab === 'quality',
   });
   const activityQuery = useQuery({
     queryKey: ['activity', search, page],
@@ -35,88 +29,60 @@ export function QualityPage() {
     <div className="space-y-4">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">Quality & Activity</h1>
-          <p className="mt-1 text-sm text-muted">Data-quality indicators computed from linked records, plus steward activity.</p>
+          <h1 className="text-2xl font-semibold">Quality & Audit</h1>
+          <p className="mt-1 text-sm text-muted">
+            Audit trail, pipeline runs, and upload history. Synthetic data only.
+          </p>
         </div>
-        <a
-          className="rounded-md border border-border px-3 py-2 text-sm"
-          href={`${getApiBaseUrl()}/exports/${tab === 'activity' ? 'activity' : 'source_records'}`}
-        >
+        <a className="rounded-md border border-border px-3 py-2 text-sm" href={`${getApiBaseUrl()}/exports/activity`}>
           Export CSV
         </a>
       </header>
 
       <div className="flex gap-2">
-        <button type="button" className={`rounded-md px-3 py-1.5 text-sm ${tab === 'quality' ? 'bg-primary text-white' : 'bg-slate-100'}`} onClick={() => setMany({ tab: 'quality' })}>Quality</button>
+        <button type="button" className={`rounded-md px-3 py-1.5 text-sm ${tab === 'audit' ? 'bg-primary text-white' : 'bg-slate-100'}`} onClick={() => setMany({ tab: 'audit' })}>Audit</button>
         <button type="button" className={`rounded-md px-3 py-1.5 text-sm ${tab === 'activity' ? 'bg-primary text-white' : 'bg-slate-100'}`} onClick={() => setMany({ tab: 'activity', page: '1' })}>Activity</button>
       </div>
 
-      {tab === 'quality' ? (
+      {tab === 'audit' ? (
         <>
           {qualityQuery.isLoading ? <Skeleton className="h-40 w-full" /> : null}
           {qualityQuery.isError ? <ErrorState message={(qualityQuery.error as Error).message} onRetry={() => qualityQuery.refetch()} /> : null}
           {qualityQuery.data ? (
             <div className="space-y-4">
               <div className="grid gap-3 md:grid-cols-4">
-                <Metric label="Unresolved records" value={qualityQuery.data.unresolved_records} href="/sources?status=unresolved" />
-                <Metric label="Conflicting cases" value={qualityQuery.data.conflicting_cases} href="/reviews?case_type=identifier_conflict&status=pending" />
-                <Metric label="Pending reviews" value={qualityQuery.data.pending_review_volume} href="/reviews?status=pending" />
+                <Metric label="Unresolved records" value={qualityQuery.data.unresolved_records} />
+                <Metric label="Conflicting cases" value={qualityQuery.data.conflicting_cases} />
+                <Metric label="Pending reviews" value={qualityQuery.data.pending_review_volume} />
                 <Metric label="Inconsistent evidence refs" value={qualityQuery.data.inconsistent_evidence_refs} />
               </div>
               <p className="rounded-md border border-border bg-white px-3 py-2 text-sm text-muted">
                 {qualityQuery.data.matching_accuracy_note}
               </p>
               <section className="rounded-[12px] border border-border bg-white p-4 shadow-sm">
-                <h3 className="text-sm font-semibold">AI analysis execution</h3>
-                <div className="mt-3 grid gap-2 text-sm md:grid-cols-4">
-                  {Object.entries(qualityQuery.data.ai_job_counts || {}).map(([status, count]) => (
-                    <div key={status} className="rounded-md border border-border px-3 py-2">
-                      <div className="text-xs uppercase text-muted">{status}</div>
-                      <div className="text-lg font-semibold">{count}</div>
-                    </div>
-                  ))}
-                </div>
-                {jobsQuery.isError ? <ErrorState message={(jobsQuery.error as Error).message} onRetry={() => jobsQuery.refetch()} /> : null}
-                <ul className="mt-3 space-y-1 text-sm">
-                  {(jobsQuery.data?.items || []).slice(0, 8).map((job) => (
-                    <li key={job.job_id}>
-                      {job.operation || 'analysis'} · {job.status}
-                      {job.completed_at ? ` · ${formatDateTime(job.completed_at)}` : ''}
-                      {job.cached ? ' · Previously generated' : ''}
+                <h3 className="text-sm font-semibold">Recent audit events</h3>
+                <ul className="mt-3 space-y-2 text-sm">
+                  {((qualityQuery.data as { audit_events?: Array<Record<string, unknown>> }).audit_events || []).map((a) => (
+                    <li key={String(a.audit_id)} className="border-t border-border pt-2 first:border-0 first:pt-0">
+                      <div className="font-medium">{displayValue(a.action)} · {displayValue(a.actor_label || a.actor, 'System')}</div>
+                      <div className="text-xs text-muted">{formatDateTime(String(a.occurred_at || a.created_at || ''))} · {displayValue(a.summary || a.detail)}</div>
                     </li>
                   ))}
+                  {!((qualityQuery.data as { audit_events?: unknown[] }).audit_events || []).length ? (
+                    <li className="text-muted">No audit events yet</li>
+                  ) : null}
                 </ul>
               </section>
               <section className="rounded-[12px] border border-border bg-white p-4 shadow-sm">
-                <h3 className="text-sm font-semibold">Source completeness</h3>
-                <div className="mt-3 overflow-auto">
-                  <table className="min-w-full text-sm">
-                    <thead className="text-xs uppercase text-muted">
-                      <tr>
-                        <th className="py-1 text-left">Source</th>
-                        <th className="py-1 text-left">Rows</th>
-                        <th className="py-1 text-left">Completeness</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {qualityQuery.data.source_completeness.map((s) => (
-                        <tr key={String(s.source_id)} className="border-t border-border">
-                          <td className="py-2">{displayValue(s.source_name)}</td>
-                          <td className="py-2">{displayValue(s.row_count)}</td>
-                          <td className="py-2">{percent(s.completeness as number)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </section>
-              <section className="rounded-[12px] border border-border bg-white p-4 shadow-sm">
-                <h3 className="text-sm font-semibold">Missing fields</h3>
+                <h3 className="text-sm font-semibold">Pipeline / upload runs</h3>
                 <ul className="mt-3 space-y-2 text-sm">
-                  {qualityQuery.data.missing_fields.map((m) => (
-                    <li key={String(m.field)} className="flex justify-between gap-3">
-                      <span>{displayValue(m.field)}</span>
-                      <span className="text-muted">{displayValue(m.count)} rows</span>
+                  {[
+                    ...(((qualityQuery.data as { pipeline_runs?: Array<Record<string, unknown>> }).pipeline_runs) || []),
+                    ...(((qualityQuery.data as { upload_batches?: Array<Record<string, unknown>> }).upload_batches) || []),
+                  ].slice(0, 20).map((run, idx) => (
+                    <li key={idx} className="border-t border-border pt-2 first:border-0 first:pt-0">
+                      <div className="font-medium">{displayValue(run.run_id || run.batch_id)} · {displayValue(run.status)}</div>
+                      <div className="text-xs text-muted">{formatDateTime(String(run.updated_at || run.created_at || ''))}</div>
                     </li>
                   ))}
                 </ul>
@@ -124,7 +90,9 @@ export function QualityPage() {
             </div>
           ) : null}
         </>
-      ) : (
+      ) : null}
+
+      {tab === 'activity' ? (
         <>
           <FilterBar>
             <FilterField label="Search">
@@ -134,57 +102,26 @@ export function QualityPage() {
           {activityQuery.isLoading ? <Skeleton className="h-40 w-full" /> : null}
           {activityQuery.isError ? <ErrorState message={(activityQuery.error as Error).message} onRetry={() => activityQuery.refetch()} /> : null}
           {activityQuery.data ? (
-            <div className="overflow-auto rounded-[12px] border border-border bg-white">
-              <table className="min-w-full text-sm">
-                <thead className="bg-slate-50 text-xs uppercase text-muted">
-                  <tr>
-                    <th className="px-3 py-2 text-left">Timestamp</th>
-                    <th className="px-3 py-2 text-left">Actor</th>
-                    <th className="px-3 py-2 text-left">Entity</th>
-                    <th className="px-3 py-2 text-left">Action</th>
-                    <th className="px-3 py-2 text-left">Reason</th>
-                    <th className="px-3 py-2 text-left">Source</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {activityQuery.data.items.map((row) => (
-                    <tr key={String(row.audit_id)} className="border-t border-border">
-                      <td className="px-3 py-2">{formatDateTime(String(row.occurred_at || ''))}</td>
-                      <td className="px-3 py-2">{displayValue(row.actor_label)}</td>
-                      <td className="px-3 py-2">
-                        {row.doctor_id ? (
-                          <Link className="text-primary hover:underline" to={`/golden-records/${String(row.doctor_id)}`}>
-                            {displayValue(row.doctor_name || row.doctor_id)}
-                          </Link>
-                        ) : displayValue(row.entity)}
-                      </td>
-                      <td className="px-3 py-2">{displayValue(row.action)}</td>
-                      <td className="px-3 py-2">{displayValue(row.summary)}</td>
-                      <td className="px-3 py-2">
-                        {row.is_seeded ? (
-                          <span className="text-xs text-muted" title="Seeded historical sample event">Sample history</span>
-                        ) : (
-                          <span className="text-xs text-emerald-800">Live decision</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <ul className="space-y-2 rounded-[12px] border border-border bg-white p-4 text-sm shadow-sm">
+              {(activityQuery.data.items || []).map((item: Record<string, unknown>) => (
+                <li key={String(item.audit_id || item.event_id)} className="border-t border-border pt-2 first:border-0 first:pt-0">
+                  <div className="font-medium">{displayValue(item.summary || item.title || item.action)}</div>
+                  <div className="text-xs text-muted">{formatDateTime(String(item.occurred_at || item.recorded_at || ''))}</div>
+                </li>
+              ))}
+            </ul>
           ) : null}
         </>
-      )}
+      ) : null}
     </div>
   );
 }
 
-function Metric({ label, value, href }: { label: string; value: number; href?: string }) {
-  const body = (
+function Metric({ label, value }: { label: string; value: number }) {
+  return (
     <div className="rounded-[12px] border border-border bg-white p-4 shadow-sm">
       <div className="text-xs uppercase text-muted">{label}</div>
       <div className="mt-2 text-2xl font-semibold">{value}</div>
     </div>
   );
-  return href ? <Link to={href}>{body}</Link> : body;
 }

@@ -25,7 +25,6 @@ export function DoctorDrawer({
           tab={tab}
           onTabChange={onTabChange}
           onClose={() => onOpenChange(false)}
-          expandTo={`/golden-records/${doctorId}?tab=${tab}`}
           eventId={eventId}
         />
       ) : null}

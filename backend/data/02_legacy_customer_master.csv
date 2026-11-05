@@ -1,0 +1,25 @@
+﻿master_id,full_name,npi,specialty_desc,primary_org,address,city,st,zip,phone,status,created_date,last_updated
+M1001,Sarah Lee MD,1309803819,Med Onc,Northview Oncology Associates,100 Example Ave,Chicago,IL,60601,3125550142,Active,2014-02-10,2023-03-14
+M2044,Sarah Lee-Kim,,Oncology,Lakeshore Cancer Institute,200 Sample Blvd,Chicago,IL,60611,3125550143,Active,2026-03-01,2026-03-01
+M1002,Sarah Lee MD,1848459461,Dermatology,Bayline Dermatology,300 Test Rd,Houston,TX,77002,7135550110,Active,2015-05-20,2023-05-18
+M1003,Sara Li MD,1603219472,Med Onc,Westloop Cancer Care,1200 Sample Ave,Chicago,IL,60607,3125550177,Active,2016-01-11,2024-02-12
+M1004,William Harris Jr MD,1500605765,Hem/Onc,Harborlight Cancer Center,400 Example Pkwy,Boston,MA,02114,6175550120,Active,2015-08-03,2025-03-03
+M1005,William Harris MD,1500605765,Hem/Onc,Harborlight Cancer Center,400 Example Pkwy,Boston,MA,02114,6175550120,Active,2012-04-17,2022-11-20
+M1006,Priya Sharma MD,1576635514,Med Onc,Southgate Hematology-Oncology,510 Test Ave,Atlanta,GA,30308,4045550132,Active,2013-09-09,2025-01-16
+M1007,Miguel Alvarez MD,1420493599,Hematology,Biscayne Hematology Group,600 Example Dr,Miami,FL,33131,3055550140,Active,2013-02-02,2025-07-08
+M1008,Wei Zhang MD,1060873258,Med Onc,Cascade Thoracic Oncology,700 Test Way,Seattle,WA,98104,2065550150,Active,2015-03-30,2024-09-14
+M1009,Aisha Rahman MD,1671942492,Med Onc,Prairie Oncology Partners,800 Example Ct,Dallas,TX,75201,2145550160,Active,2012-12-12,2024-05-06
+M1010,Robert Nowak MD,1196825297,Med Onc,Twin Rivers Cancer Care,1000 Test Blvd,Minneapolis,MN,55401,6125550170,Active,2014-06-25,2023-08-09
+M1011,Emily Nowak MD,1624944348,Hem/Onc,Twin Rivers Cancer Care,1000 Test Blvd,Minneapolis,MN,55401,6125550170,Active,2015-10-08,2023-08-09
+M1012,Thomas Grant MD,1759922929,Med Onc,Front Range Oncology,900 Sample Rd,Denver,CO,80202,3035550190,Active,2013-07-19,2024-04-25
+M1013,John Smith MD,1567874528,Med Onc,Lakefront Hematology Oncology,1600 Sample Cir,Cleveland,OH,44113,2165550112,Active,2015-01-15,2024-01-15
+M1014,John Smith MD,1010075731,Hem/Onc,Scioto Valley Oncology,1700 Test St,Columbus,OH,43215,6145550113,Active,2015-01-15,2024-01-15
+M1015,Karen Whitfield MD,1687630180,Med Onc,Piedmont Bay Cancer Care,1800 Example Ave,Charlotte,NC,28202,7045550114,Active,2015-01-15,2022-09-10
+M1016,Anil Menon MD,1271768321,Med Onc,Hudson Crest Oncology,2000 Test Ave,Albany,NY,12207,5185550116,Active,2015-01-15,2024-01-15
+M1017,Menon Anil MD,,Oncology,Hudson Crest Oncology,2000 Test Ave,Albany,NY,12207,5185550116,Active,2021-03-03,2021-03-03
+M1018,Grace Park MD,1585664414,Med Onc,Evergreen Breast Center,2100 Example Ln,Portland,OR,97204,5035550117,Active,2015-01-15,2024-01-15
+M1019,David Park MD,1585664414,Hem/Onc,Evergreen Breast Center,2100 Example Ln,Portland,OR,97204,5035550117,Active,2015-01-15,2024-01-15
+M1020,Renee Tran NP,1489124770,Nurse Practitioner,Bluegrass Oncology Clinic,2200 Sample Dr,Louisville,KY,40202,5025550118,Active,2015-01-15,2024-01-15
+M1021,Jose Hernandez MD,1704243926,Med Onc,Alamo Heights Oncology,1500 Example Loop,San Antonio,TX,78205,2105550111,Active,2015-01-15,2024-01-15
+M1022,José Hernández,,Oncology,Alamo Heights Oncology,1500 Example Loop,San Antonio,TX,78205,2105550111,Active,2022-05-05,2022-05-05
+M1023,Kathryn O'Brien MD,1458829631,Med Onc,Piedmont Bay Cancer Care,1800 Example Ave,Charlotte,NC,28202,7045550114,Active,2015-01-15,2024-01-15

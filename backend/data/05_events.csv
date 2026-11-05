@@ -1,0 +1,20 @@
+﻿event_id,event_type,attendee,role,org_as_written,venue_city,venue_state,email,event_date
+E-1140,Speaker program,S. Lee-Kim,Speaker,Lakeshore,Chicago,IL,,11 Feb 2026
+E-1141,Advisory board,Sarah Lee,Attendee,Bayline Derm,Houston,TX,,03 Mar 2025
+E-1142,Dinner program,Dr. Lee,Attendee,,Chicago,IL,,19 Sep 2025
+E-1143,Speaker program,Prof. Dr. Hans Keller,Speaker,Rheinland University Clinic (fictional),Chicago,IL,h.keller@example.test,05 Jun 2025
+E-1144,Advisory board,H. Keller,Attendee,Rheinland Univ. Clinic (fictional),Boston,MA,h.keller@example.test,12 Oct 2025
+E-1145,Dinner program,William Harris,Attendee,,Boston,MA,,24 Apr 2026
+E-1146,Speaker program,"Priya Sharma, MD",Speaker,Peachtree Ridge,Atlanta,GA,,08 Jan 2026
+E-1147,Dinner program,"Alvarez, Miguel",Attendee,Savannah Coastal,Savannah,GA,,16 Nov 2025
+E-1148,Advisory board,"Wei Zhang, MD, PhD",Attendee,Cascade Thoracic,Seattle,WA,,27 Feb 2026
+E-1150,Dinner program,John Smith,Attendee,Lakefront Hem Onc,Cleveland,OH,,14 May 2025
+E-1151,Dinner program,John Smith,Attendee,Scioto Valley,Columbus,OH,,15 May 2025
+E-1152,Advisory board,John Smith,Attendee,,Pittsburgh,PA,,20 Jun 2025
+E-1153,Speaker program,Karen Whitfield,Speaker,Piedmont Bay,Charlotte,NC,,02 Sep 2022
+E-1154,Dinner program,K. Whitfield,Attendee,Tidewater Onc,Norfolk,VA,,18 Mar 2025
+E-1155,Dinner program,Dr. O'Brien,Attendee,Piedmont Bay Cancer Care,Charlotte,NC,,21 Jan 2026
+E-1156,Speaker program,TBD Speaker,Speaker,,Chicago,IL,,30 Apr 2026
+E-1157,Advisory board,"Menon, Anil",Attendee,Hudson Crest,Albany,NY,,11 Nov 2025
+E-1158,Dinner program,Lauren Okafor,Attendee,Mesa Vista,Phoenix,AZ,,07 Oct 2025
+E-1159,Dinner program,Renee Tran NP,Attendee,Bluegrass Onc,Louisville,KY,,09 Dec 2025

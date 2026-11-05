@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { fetchReviews } from '../api/reviews';
 import { fetchReferenceData } from '../api/dashboard';
 import { DataTable } from '../components/DataTable';
@@ -9,8 +9,10 @@ import { FilterBar, FilterField, inputClass } from '../components/FilterBar';
 import { TableSkeleton } from '../components/Skeleton';
 import { StatusBadge } from '../components/StatusBadge';
 import { useUrlState } from '../hooks/useUrlState';
+import { displayValue } from '../utils/formatters';
 
 export function ReviewsPage() {
+  const navigate = useNavigate();
   const { get, setMany } = useUrlState();
   const status = get('status', 'pending');
   const caseType = get('case_type');
@@ -22,18 +24,20 @@ export function ReviewsPage() {
   const listQuery = useQuery({
     queryKey: ['reviews', status, caseType, severity, search, page],
     queryFn: ({ signal }) =>
-      fetchReviews({ status, case_type: caseType, severity, search, page, page_size: 25 }, signal),
+      fetchReviews({ status, case_type: caseType, severity, search, page, page_size: 25, sort_by: 'risk', sort_direction: 'asc' }, signal),
   });
 
   return (
     <div className="space-y-4">
       <header>
         <h1 className="text-2xl font-semibold">Review Center</h1>
-        <p className="mt-1 text-sm text-muted">Steward decisions for ambiguous matches and proposed field changes.</p>
+        <p className="mt-1 text-sm text-muted">
+          Each case is a plain-English question. Payment issues sort above routine updates.
+        </p>
       </header>
 
       <div className="flex gap-2" role="tablist" aria-label="Review status">
-        {['pending', 'deferred', 'completed'].map((s) => (
+        {['pending', 'deferred', 'completed', 'approved', 'rejected'].map((s) => (
           <button
             key={s}
             type="button"
@@ -51,15 +55,15 @@ export function ReviewsPage() {
         <FilterField label="Search">
           <input className={inputClass} value={search} onChange={(e) => setMany({ search: e.target.value, page: '1' })} />
         </FilterField>
-        <FilterField label="Case type">
+        <FilterField label="Issue type">
           <select className={inputClass} value={caseType} onChange={(e) => setMany({ case_type: e.target.value, page: '1' })}>
             <option value="">All</option>
             {(refQuery.data?.review_case_types || []).map((c) => (
-              <option key={c} value={c}>{c}</option>
+              <option key={c} value={c}>{c.replace(/_/g, ' ')}</option>
             ))}
           </select>
         </FilterField>
-        <FilterField label="Severity">
+        <FilterField label="Risk">
           <select className={inputClass} value={severity} onChange={(e) => setMany({ severity: e.target.value, page: '1' })}>
             <option value="">All</option>
             {(refQuery.data?.severities || []).map((c) => (
@@ -72,37 +76,48 @@ export function ReviewsPage() {
       {listQuery.isLoading ? <TableSkeleton /> : null}
       {listQuery.isError ? <ErrorState message={(listQuery.error as Error).message} onRetry={() => listQuery.refetch()} /> : null}
       {listQuery.data ? (
-        <>
-          <DataTable
-            rows={listQuery.data.items}
-            rowKey={(r) => r.review_id}
-            empty={<EmptyState title="No review cases in this view" />}
-            columns={[
-              { key: 'case', header: 'Case', render: (r) => r.title },
-              { key: 'doctor', header: 'Doctor / candidates', render: (r) => r.doctor_name || r.candidates_summary || r.doctor_id || '—' },
-              { key: 'type', header: 'Type', render: (r) => r.case_type },
-              { key: 'sev', header: 'Severity', render: (r) => <StatusBadge value={r.severity} kind="severity" /> },
-              { key: 'age', header: 'Age (days)', render: (r) => r.age_days ?? '—' },
-              { key: 'status', header: 'Status', render: (r) => <StatusBadge value={r.status} kind="review" /> },
-              {
-                key: 'action',
-                header: 'Review',
-                render: (r) => (
-                  <Link className="text-primary hover:underline" to={`/reviews/${r.review_id}`}>
-                    Open
-                  </Link>
-                ),
+        <DataTable
+          rows={listQuery.data.items}
+          rowKey={(r) => r.review_id}
+          onRowClick={(r) => navigate(`/reviews/${r.review_id}`)}
+          empty={<EmptyState title="No review cases in this view" />}
+          columns={[
+            {
+              key: 'question',
+              header: 'Question',
+              render: (r) => (
+                <div>
+                  <div className="font-medium">{displayValue((r as { question?: string }).question || r.title)}</div>
+                  <div className="text-xs text-muted">{r.review_id}</div>
+                </div>
+              ),
+            },
+            { key: 'source', header: 'Source', render: (r) => displayValue((r as { source_label?: string }).source_label) },
+            {
+              key: 'doctor',
+              header: 'Doctor / candidates',
+              render: (r) => displayValue(r.doctor_name || r.candidates_summary, 'No candidates'),
+            },
+            { key: 'issue', header: 'Issue type', render: (r) => displayValue((r as { issue_type?: string }).issue_type || r.case_type?.replace(/_/g, ' ')) },
+            {
+              key: 'score',
+              header: 'Match score',
+              render: (r) => {
+                const score = (r as { match_score?: number }).match_score;
+                return score == null ? '—' : Number(score).toFixed(3);
               },
-            ]}
-          />
-          <div className="flex justify-between text-sm">
-            <span className="text-muted">{listQuery.data.total} cases</span>
-            <div className="flex gap-2">
-              <button type="button" className="rounded-md border px-3 py-1.5" disabled={page <= 1} onClick={() => setMany({ page: String(page - 1) })}>Previous</button>
-              <button type="button" className="rounded-md border px-3 py-1.5" disabled={page * 25 >= listQuery.data.total} onClick={() => setMany({ page: String(page + 1) })}>Next</button>
-            </div>
-          </div>
-        </>
+            },
+            {
+              key: 'rec',
+              header: 'Recommended action',
+              render: (r) => displayValue((r as { recommended_action?: string }).recommended_action)?.replace(/_/g, ' '),
+            },
+            { key: 'risk', header: 'Risk', render: (r) => <StatusBadge value={r.severity} kind="severity" /> },
+            { key: 'age', header: 'Age (days)', render: (r) => r.age_days ?? '—' },
+            { key: 'reviewer', header: 'Reviewer', render: (r) => displayValue(r.assigned_reviewer, 'Unassigned') },
+            { key: 'status', header: 'Status', render: (r) => <StatusBadge value={r.status} kind="review" /> },
+          ]}
+        />
       ) : null}
     </div>
   );

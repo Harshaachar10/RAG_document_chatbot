@@ -15,7 +15,6 @@ from app.ai.provider import LlmClient, sanitize_error
 from app.ai.validate import parse_model_output
 from app.core.exceptions import AppError, NotFoundError, ValidationAppError
 from app.core.settings import Settings
-from app.repositories.csv_repository import CsvDemoRepository
 from app.utils.dates import utc_now_iso
 from app.utils.links import is_linked_status
 
@@ -24,7 +23,7 @@ ACTIVE = {"queued", "preparing_evidence", "calling_model", "validating_response"
 
 
 class AiService:
-    def __init__(self, repo: CsvDemoRepository, settings: Settings, client: LlmClient) -> None:
+    def __init__(self, repo: Any, settings: Settings, client: LlmClient) -> None:
         self.repo = repo
         self.settings = settings
         self.client = client

@@ -1,7 +1,0 @@
-﻿source_id,source_name,source_type,description,snapshot_version,updated_at
-CRM,CRM directory,identity_entry,Fictional doctor-only source,demo-v1,2026-11-03T09:00:00Z
-EVT,Speaker and event registrations,identity_entry,Fictional doctor-only source,demo-v1,2026-11-03T09:00:00Z
-PAY,Payments and invoices,supporting_transaction,Fictional doctor-only source,demo-v1,2026-11-03T09:00:00Z
-RX,Prescriber activity,supporting_transaction,Fictional doctor-only source,demo-v1,2026-11-03T09:00:00Z
-FORM,Credential and practice forms,identity_entry,Fictional doctor-only source,demo-v1,2026-11-03T09:00:00Z
-NOTE,Rep and medical notes,note_observation,Fictional doctor-only source,demo-v1,2026-11-03T09:00:00Z

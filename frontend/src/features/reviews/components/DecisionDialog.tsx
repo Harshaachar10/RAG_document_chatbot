@@ -22,7 +22,7 @@ export function DecisionDialog({
   const [selected, setSelected] = useState(String(candidates[0]?.candidate_doctor_id || ''));
   const [confirming, setConfirming] = useState(false);
 
-  const needsCandidate = action === 'link_records' || action === 'select_candidate';
+  const needsCandidate = action === 'link_records' || action === 'select_candidate' || action === 'approve';
 
   return (
     <Dialog

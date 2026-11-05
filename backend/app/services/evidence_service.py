@@ -3,12 +3,11 @@ from __future__ import annotations
 from typing import Any, Dict, List
 
 from app.core.exceptions import NotFoundError, ValidationAppError
-from app.repositories.csv_repository import CsvDemoRepository
 from app.utils.csv_io import assert_safe_id
 
 
 class EvidenceService:
-    def __init__(self, repo: CsvDemoRepository) -> None:
+    def __init__(self, repo: Any) -> None:
         self.repo = repo
 
     def get_evidence(self, evidence_id: str) -> Dict[str, Any]:
