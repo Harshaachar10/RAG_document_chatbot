@@ -3,10 +3,69 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional, Set
 
 from app.identity.labels import case_label, risk_rank, source_label
+from app.services.story import build_story
 from app.utils.links import is_linked_status
 
 # NPPES + legacy master are reference/master baselines — not "source doctor entries"
 NON_SOURCE_ENTRY_KEYS = frozenset({"nppes", "legacy_master"})
+
+
+def _examples(doctors: Dict[str, Dict[str, Any]], decisions: List[Dict[str, Any]], reviews: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Pick three real cases by pattern. Record IDs are not hardcoded."""
+    examples: List[Dict[str, Any]] = []
+    hyphenated = [
+        d
+        for d in doctors.values()
+        if "-" in (d.get("preferred_name") or "") and (d.get("former_names") or d.get("aliases_list"))
+    ]
+    if hyphenated:
+        doctor = sorted(hyphenated, key=lambda d: d.get("preferred_name") or "")[0]
+        examples.append(
+            {
+                "kind": "two_names_one_doctor",
+                "title": "Two names, one doctor",
+                "detail": f"{doctor.get('preferred_name')} is also known under a former name.",
+                "href": f"/doctors/{doctor['doctor_id']}?tab=known",
+                "doctor_id": doctor["doctor_id"],
+            }
+        )
+    by_name: Dict[str, List[Dict[str, Any]]] = {}
+    for doctor in doctors.values():
+        key = (doctor.get("preferred_name") or "").lower().split(",")[0]
+        tokens = [tok for tok in key.replace(".", "").split() if tok not in {"md", "np", "do", "jr", "sr"}]
+        if len(tokens) >= 2:
+            by_name.setdefault(" ".join(tokens[:2]), []).append(doctor)
+    pair = next((rows for rows in by_name.values() if len({r.get("official_npi") for r in rows}) >= 2), None)
+    if pair:
+        left, right = pair[0], pair[1]
+        examples.append(
+            {
+                "kind": "two_doctors_one_name",
+                "title": "Two doctors, one name",
+                "detail": f"{left.get('preferred_name')} and {right.get('preferred_name')} stay separate.",
+                "href": f"/doctors/{left['doctor_id']}?tab=similar",
+                "doctor_id": left["doctor_id"],
+            }
+        )
+    payment = next(
+        (
+            d
+            for d in decisions
+            if d.get("action") == "COMPLIANCE_REVIEW" and d.get("npi_status") == "MISMATCH"
+        ),
+        None,
+    )
+    if payment:
+        examples.append(
+            {
+                "kind": "payment_wrong_npi",
+                "title": "Payment with a suspected wrong NPI",
+                "detail": payment.get("reason") or "The stated NPI does not match the recipient.",
+                "href": "/review/payments",
+                "record_id": payment.get("record_id"),
+            }
+        )
+    return examples
 
 
 class DashboardService:
@@ -198,85 +257,125 @@ class DashboardService:
             "view": view,
         }
 
-        def kpi(key, label, value, href, tooltip, secondary=None, display=None, extra_filters=None):
+        def kpi(
+            key,
+            label,
+            value,
+            href,
+            tooltip,
+            secondary=None,
+            display=None,
+            detail=None,
+            parts=None,
+            extra_filters=None,
+        ):
             return {
                 "key": key,
                 "label": label,
                 "value": value,
                 "secondary_value": secondary,
                 "display": display if display is not None else str(value),
+                "detail": detail,
+                "parts": parts or [],
                 "tooltip": tooltip,
                 "href": href,
                 "filters": {**(extra_filters or {}), **{k: v for k, v in filters.items() if v}},
             }
 
+        npi_parts = [
+            {"label": "Invalid format", "value": npi_issues["invalid"]},
+            {"label": "Group / org NPI", "value": npi_issues["group"]},
+            {"label": "Deactivated", "value": npi_issues["deactivated"]},
+            {"label": "Not in NPPES", "value": npi_issues["mismatch"]},
+        ]
+        npi_nonzero = [p for p in npi_parts if p["value"] > 0]
+        if not npi_nonzero:
+            npi_detail = "No NPI problems in this view"
+        elif len(npi_nonzero) == 1:
+            npi_detail = f"{npi_nonzero[0]['value']} {npi_nonzero[0]['label'].lower()}"
+        else:
+            npi_detail = " · ".join(f"{p['value']} {p['label'].lower()}" for p in npi_nonzero)
+
+        master_delta = masters_after - masters_before
+        if master_delta == 0:
+            master_detail = "No net change in master count"
+        elif master_delta > 0:
+            master_detail = f"Net +{master_delta} after cleanup"
+        else:
+            master_detail = f"Net {master_delta} after cleanup"
+
+        decisions = list(state_snap.get("match_decisions") or [])
+        linked_decisions = [d for d in decisions if d.get("action") in {"AUTO_LINK", "PROVISIONAL"}]
+        seeded = [d for d in linked_decisions if d.get("round") == 0]
+        later = [d for d in linked_decisions if isinstance(d.get("round"), int) and d.get("round") >= 1]
+        search = state_snap.get("search_quality") or {}
+        masters_fixed = merges + splits + new_masters
+        waiting_people = len(pending_reviews) - len(compliance)
+        if waiting_people < 0:
+            waiting_people = 0
+
         kpis = [
             kpi(
-                "source_records_processed",
-                "Source records processed",
-                len(processable),
-                "/sources",
-                "All non-reference source rows in scope (excludes NPPES and Legacy Master baselines).",
-            ),
-            kpi(
-                "resolved_to_npi",
-                "Records resolved to an NPI",
+                "records_resolved",
+                "Records resolved to a doctor",
                 len(resolved),
-                "/golden-records",
-                f"{gained_npi} of these gained a missing NPI via match.",
-                secondary=gained_npi,
-                display=f"{len(resolved)} ({gained_npi} gained NPI)",
+                "/audit/sources",
+                "Source rows with a confirmed link to a doctor. Open the records behind this count.",
+                extra_filters={"status": "linked"},
             ),
             kpi(
-                "wrong_npis_flagged",
-                "Wrong NPIs flagged",
+                "wrong_npis_caught",
+                "Wrong NPIs caught",
                 wrong_total,
-                "/reviews",
-                "Group / invalid / deactivated / mismatch buckets.",
-                display=f"{wrong_total} (G{npi_issues['group']} I{npi_issues['invalid']} D{npi_issues['deactivated']} M{npi_issues['mismatch']})",
-                extra_filters={"issue": "npi"},
+                "/review",
+                "Invalid, group, deactivated, or mismatched NPI values caught before they updated a doctor.",
+                detail=npi_detail,
+                parts=npi_parts,
+                extra_filters={"queue": "compliance"},
             ),
             kpi(
-                "master_cleanup",
-                "Master records before → after",
-                masters_after,
-                "/golden-records",
-                f"Legacy master rows {masters_before}. Merges {merges}. Splits {splits}. New masters {new_masters}.",
-                secondary=masters_before,
-                display=f"{masters_before} → {masters_after}",
+                "masters_fixed",
+                "Master records fixed",
+                masters_fixed,
+                "/doctors",
+                "Merges, splits, and new masters created from the legacy file.",
+                detail=f"{merges} merges · {splits} splits · {new_masters} new · legacy {masters_before} → doctors {masters_after}",
+                parts=[
+                    {"label": "Merges", "value": merges},
+                    {"label": "Splits", "value": splits},
+                    {"label": "New masters", "value": new_masters},
+                ],
             ),
             kpi(
-                "same_name_separate",
-                "Same-name doctors kept separate",
-                same_name_doctors or same_name_kept,
-                "/reviews",
-                "Golden profiles sharing a family name, plus same-name ambiguity cases.",
-                extra_filters={"case_type": "same_name_ambiguity"},
-            ),
-            kpi(
-                "pending_human_review",
-                "Pending human review",
+                "decisions_waiting",
+                "Decisions waiting for people",
                 len(pending_reviews),
-                "/reviews",
-                "Open review-center cases.",
+                "/review",
+                "Open identity and payment cases. Payments are counted separately and are not auto-corrected.",
+                secondary=len(compliance),
+                detail=f"{waiting_people} identity · {len(compliance)} payments",
+                parts=[
+                    {"label": "Identity", "value": waiting_people},
+                    {"label": "Payments", "value": len(compliance)},
+                ],
                 extra_filters={"status": "pending"},
             ),
-            kpi(
-                "payment_compliance",
-                "Payment records needing compliance review",
-                len(compliance),
-                "/payment-compliance",
-                "Transparency / payment rows that must not auto-correct filed values.",
-            ),
-            kpi(
-                "unmatched_provisional",
-                "Unmatched / provisional (no NPI)",
-                len(unmatched) + len(provisional),
-                "/golden-records",
-                f"{len(unmatched)} unmatched source rows; {len(provisional)} provisional masters.",
-                display=f"{len(unmatched)} unmatched · {len(provisional)} provisional",
-            ),
         ]
+        flow = [
+            {"key": "source_records", "label": "Source records", "value": len(processable), "href": "/audit/sources"},
+            {"key": "npi_checked", "label": "NPI checked", "value": len(decisions) or len(processable), "href": "/audit/sources"},
+            {"key": "seeded", "label": "Seeded from verified NPIs", "value": len(seeded), "href": "/audit/runs"},
+            {"key": "later_rounds", "label": "Found in later rounds", "value": len(later), "href": "/audit/runs"},
+            {"key": "sent_to_people", "label": "Sent to people", "value": len(pending_reviews), "href": "/review"},
+            {"key": "unmatched", "label": "Unmatched", "value": len(unmatched), "href": "/audit/sources", "filters": {"status": "unresolved"}},
+        ]
+        beyond = {
+            "no_usable_npi": int(search.get("learned_value_links") or 0) + sum(1 for d in linked_decisions if not d.get("target_npi") and not d.get("stated_npi")),
+            "semantic_only": int(search.get("semantic_only") or 0),
+            "learned_rounds": int(search.get("learned_value_links") or 0),
+            "semantic_status": search.get("semantic_status") or "skipped",
+        }
+        examples = _examples(doctors, decisions, reviews)
 
         # Priority list by business risk
         priority = sorted(
@@ -367,6 +466,15 @@ class DashboardService:
             "snapshot_version": self.repo.snapshot_version(),
             "applied_filters": filters,
             "kpis": kpis,
+            "flow": flow,
+            "beyond_npi": beyond,
+            "examples": examples,
+            "before_after": {
+                "legacy_rows": masters_before,
+                "doctors": masters_after,
+                "href_before": "/audit/sources?source_id=legacy_master",
+                "href_after": "/doctors",
+            },
             "npi_issue_buckets": npi_issues,
             "action_counts": actions,
             "scorecard_available": False,
@@ -375,6 +483,8 @@ class DashboardService:
             "source_coverage": source_coverage,
             "recent_decisions": recent_decisions,
             "upload_batch_count": len(upload_batches),
+            "safety_alarms": list(state_snap.get("safety_alarms") or []),
+            "story": build_story(state_snap),
         }
 
     def source_breakdown(

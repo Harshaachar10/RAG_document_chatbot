@@ -1,215 +1,170 @@
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useRef, useState } from 'react';
+import { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { fetchDoctors, exportDoctorsUrl } from '../api/doctors';
-import { fetchReferenceData } from '../api/dashboard';
 import type { DoctorListItem } from '../api/contracts';
-import { DataTable } from '../components/DataTable';
 import { EmptyState } from '../components/EmptyState';
 import { ErrorState } from '../components/ErrorState';
-import { FilterBar, FilterField, inputClass } from '../components/FilterBar';
 import { TableSkeleton } from '../components/Skeleton';
-import { DoctorDrawer } from '../features/doctors/components/DoctorDrawer';
+import { useShell } from '../layouts/shell';
 import { useUrlState } from '../hooks/useUrlState';
-import { formatDate } from '../utils/dateUtils';
+import { useEffect } from 'react';
+
+const CHIPS = [
+  ['all', 'All'],
+  ['review', 'Needs review'],
+  ['new', 'New evidence'],
+  ['provisional', 'Provisional'],
+  ['same', 'Same-name doctor'],
+  ['incomplete', 'Incomplete'],
+  ['changed', 'Changed recently'],
+] as const;
+
+function naiveName(row: DoctorListItem) {
+  return (row.preferred_name || '')
+    .toLowerCase()
+    .replace(/[^a-z\s-]/g, ' ')
+    .replace(/-/g, ' ')
+    .split(/\s+/)
+    .filter((token) => token && !['md', 'do', 'np', 'pa', 'phd', 'jr', 'sr', 'dr'].includes(token))
+    .slice(0, 3)
+    .join(' ');
+}
 
 export function GoldenRecordsPage() {
   const { get, setMany } = useUrlState();
-  const scrollRef = useRef<number>(0);
-  const doctorId = get('doctor_id');
-  const tab = get('tab', 'summary');
+  const navigate = useNavigate();
+  const shell = useShell();
   const search = get('search');
-  const specialty = get('specialty');
-  const state = get('state');
-  const sourceId = get('source_id');
-  const pending = get('pending_review');
-  const page = Number(get('page', '1'));
-  const pageSize = Number(get('page_size', '25'));
-  const [dense, setDense] = useState(false);
-
-  const refQuery = useQuery({ queryKey: ['reference'], queryFn: ({ signal }) => fetchReferenceData(signal) });
+  const chip = get('chip', 'all');
   const listQuery = useQuery({
-    queryKey: ['doctors', search, specialty, state, sourceId, pending, page, pageSize],
+    queryKey: ['doctors', search, 'all'],
     queryFn: ({ signal }) =>
-      fetchDoctors(
-        {
-          search,
-          specialty,
-          state,
-          source_id: sourceId,
-          pending_review: pending === '' ? undefined : pending === 'true',
-          page,
-          page_size: pageSize,
-          sort_by: 'preferred_name',
-          sort_direction: 'asc',
-        },
-        signal,
-      ),
+      fetchDoctors({ search, page: 1, page_size: 100, sort_by: 'preferred_name', sort_direction: 'asc' }, signal),
   });
 
   useEffect(() => {
-    if (!doctorId && scrollRef.current) {
-      window.scrollTo(0, scrollRef.current);
-    }
-  }, [doctorId]);
+    shell.setSubtitle(listQuery.data ? `${listQuery.data.total} doctors · one record per person` : '');
+  }, [listQuery.data, shell]);
 
-  const openDoctor = (row: DoctorListItem) => {
-    scrollRef.current = window.scrollY;
-    setMany({ doctor_id: row.doctor_id, tab: 'summary' });
+  const sameNames = useMemo(() => {
+    const groups = new Map<string, number>();
+    (listQuery.data?.items || []).forEach((row) => {
+      const key = naiveName(row);
+      if (key) groups.set(key, (groups.get(key) || 0) + 1);
+    });
+    return groups;
+  }, [listQuery.data]);
+
+  const items = listQuery.data?.items || [];
+  const matches = (row: DoctorListItem, id: (typeof CHIPS)[number][0]) => {
+    if (id === 'review') return row.pending_item_count > 0;
+    if (id === 'new') return Boolean(row.is_new);
+    if (id === 'provisional') return Boolean(row.provisional);
+    if (id === 'same') return (sameNames.get(naiveName(row)) || 0) > 1;
+    if (id === 'incomplete') return (row.completeness || 0) < 100;
+    if (id === 'changed') return Boolean(row.is_new);
+    return true;
   };
+  const rows = items.filter((row) => matches(row, chip as (typeof CHIPS)[number][0]));
 
   return (
-    <div className="space-y-4">
-      <header className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">Golden Records</h1>
-          <p className="mt-1 text-sm text-muted">
-            Clean master profiles resolved to people and NPIs. Total: {listQuery.data?.total ?? '—'}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <a href={exportDoctorsUrl()} className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-white hover:bg-accent">
+    <>
+      <div className="card">
+        <div className="card-b" style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+          <div className="chips">
+            {CHIPS.map(([id, label]) => (
+              <button key={id} type="button" className={`chip ${chip === id ? 'on' : ''}`} onClick={() => setMany({ chip: id === 'all' ? '' : id })}>
+                {label}
+                <span className="c">{items.filter((row) => matches(row, id)).length}</span>
+              </button>
+            ))}
+          </div>
+          <div style={{ flex: 1 }} />
+          <input
+            style={{ border: '1px solid var(--line-2)', borderRadius: 8, padding: '8px 12px', minWidth: 200 }}
+            placeholder="Filter by name, NPI, practice"
+            aria-label="Filter doctors"
+            value={search}
+            onChange={(event) => setMany({ search: event.target.value })}
+          />
+          <a className="btn" href={exportDoctorsUrl()}>
             Export CSV
           </a>
-          <a href={exportDoctorsUrl().replace('/doctors', '/npi_mapping')} className="rounded-md border border-border px-3 py-2 text-sm">
-            Source→NPI mapping
+          <a className="btn" href={exportDoctorsUrl().replace('/doctors', '/npi_mapping')}>
+            Source → NPI mapping
           </a>
         </div>
-      </header>
-
-      <FilterBar>
-        <FilterField label="Search">
-          <input
-            className={inputClass}
-            value={search}
-            placeholder="Name, alias, or HCP ID"
-            onChange={(e) => setMany({ search: e.target.value, page: '1' })}
-          />
-        </FilterField>
-        <FilterField label="Specialty">
-          <select className={inputClass} value={specialty} onChange={(e) => setMany({ specialty: e.target.value, page: '1' })}>
-            <option value="">All</option>
-            {(refQuery.data?.specialties || []).map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-        </FilterField>
-        <FilterField label="State">
-          <select className={inputClass} value={state} onChange={(e) => setMany({ state: e.target.value, page: '1' })}>
-            <option value="">All</option>
-            {(refQuery.data?.states || []).map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-        </FilterField>
-        <FilterField label="Source">
-          <select className={inputClass} value={sourceId} onChange={(e) => setMany({ source_id: e.target.value, page: '1' })}>
-            <option value="">All</option>
-            {(refQuery.data?.sources || []).map((s) => (
-              <option key={s.source_id} value={s.source_id}>{s.source_name}</option>
-            ))}
-          </select>
-        </FilterField>
-        <FilterField label="Pending review">
-          <select className={inputClass} value={pending} onChange={(e) => setMany({ pending_review: e.target.value, page: '1' })}>
-            <option value="">All</option>
-            <option value="true">Pending only</option>
-            <option value="false">No pending</option>
-          </select>
-        </FilterField>
-        <button type="button" className="rounded-md border border-border px-3 py-2 text-sm" onClick={() => setDense((d) => !d)}>
-          Density: {dense ? 'Compact' : 'Comfortable'}
-        </button>
-      </FilterBar>
-
+      </div>
       {listQuery.isLoading ? <TableSkeleton /> : null}
-      {listQuery.isError ? (
-        <ErrorState message={(listQuery.error as Error).message} onRetry={() => listQuery.refetch()} />
-      ) : null}
+      {listQuery.isError ? <ErrorState message={(listQuery.error as Error).message} onRetry={() => listQuery.refetch()} /> : null}
       {listQuery.data ? (
-        <>
-          <DataTable
-            dense={dense}
-            rows={listQuery.data.items}
-            rowKey={(r) => r.doctor_id}
-            onRowClick={openDoctor}
-            empty={<EmptyState title="No doctors match these filters" description="Try clearing search or filters." />}
-            columns={[
-              {
-                key: 'name',
-                header: 'Doctor name',
-                render: (r) => (
-                  <div>
-                    <div className="font-medium">{r.preferred_name}</div>
-                    {r.badge ? <span className="mt-1 inline-block rounded bg-slate-100 px-1.5 py-0.5 text-[10px] uppercase">{r.badge}</span> : null}
-                  </div>
-                ),
-              },
-              { key: 'npi', header: 'NPI', render: (r) => r.official_npi || '—' },
-              { key: 'npi_status', header: 'NPI status', render: (r) => r.npi_status },
-              { key: 'id', header: 'Master ID', render: (r) => r.master_id || r.doctor_id },
-              { key: 'aliases', header: 'Aliases', render: (r) => (r.alias_count ? `${r.alias_count}` : '—') },
-              { key: 'cred', header: 'Credential', render: (r) => r.credential || '—' },
-              { key: 'specialty', header: 'Specialty', render: (r) => r.specialty || '—' },
-              { key: 'aff', header: 'Current organization', render: (r) => r.primary_affiliation || '—' },
-              { key: 'loc', header: 'Location', render: (r) => r.location || [r.city, r.state].filter(Boolean).join(', ') || '—' },
-              { key: 'lic', header: 'License states', render: (r) => (r.license_states || []).join(', ') || '—' },
-              {
-                key: 'linked',
-                header: 'Linked records',
-                render: (r) => (
-                  <button
-                    type="button"
-                    className="text-primary hover:underline"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      scrollRef.current = window.scrollY;
-                      setMany({ doctor_id: r.doctor_id, tab: 'linked' });
-                    }}
-                  >
-                    {r.linked_record_count}
-                  </button>
-                ),
-              },
-              { key: 'sources', header: 'Source count', render: (r) => r.source_count ?? '—' },
-              { key: 'issues', header: 'Open issues', render: (r) => r.open_issues ?? r.pending_item_count },
-              { key: 'updated', header: 'Last updated', render: (r) => formatDate(r.updated_at) },
-            ]}
-          />
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted">
-              Page {listQuery.data.page} of {Math.max(1, Math.ceil(listQuery.data.total / listQuery.data.page_size))} · {listQuery.data.total} total
-            </span>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                className="rounded-md border border-border px-3 py-1.5 disabled:opacity-40"
-                disabled={page <= 1}
-                onClick={() => setMany({ page: String(page - 1) })}
-              >
-                Previous
-              </button>
-              <button
-                type="button"
-                className="rounded-md border border-border px-3 py-1.5 disabled:opacity-40"
-                disabled={page * pageSize >= listQuery.data.total}
-                onClick={() => setMany({ page: String(page + 1) })}
-              >
-                Next
-              </button>
-            </div>
-          </div>
-        </>
+        <div className="card tw" data-tour="doctors-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Doctor</th>
+                <th>NPI</th>
+                <th>Status</th>
+                <th>Specialty</th>
+                <th>Practice</th>
+                <th>City</th>
+                <th className="n">Records</th>
+                <th className="n">Sources</th>
+                <th>Completeness</th>
+                <th className="n">Open issues</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.length === 0 ? (
+                <tr>
+                  <td colSpan={10}>
+                    <EmptyState title="No doctors match" />
+                  </td>
+                </tr>
+              ) : (
+                rows.map((row) => {
+                  const pct = row.completeness || 0;
+                  const color = pct >= 85 ? 'var(--ok)' : pct >= 60 ? 'var(--warn)' : 'var(--bad)';
+                  return (
+                    <tr key={row.doctor_id} className="click" onClick={() => navigate(`/doctors/${row.doctor_id}`)}>
+                      <td>
+                        <b>{row.preferred_name}</b>
+                        {row.is_new ? <span className="newdot" title="New" /> : null}
+                        {row.former_name ? <div className="faint" style={{ fontSize: 12 }}>formerly {row.former_name}</div> : null}
+                      </td>
+                      <td className="mono">{row.official_npi || <span className="faint">none</span>}</td>
+                      <td>
+                        {row.provisional ? (
+                          <span className="pill new">Provisional</span>
+                        ) : row.pending_item_count ? (
+                          <span className="pill warn">Needs review</span>
+                        ) : (
+                          <span className="pill ok">{row.badge || row.npi_status}</span>
+                        )}
+                      </td>
+                      <td>{row.specialty || <span className="faint">not recorded</span>}</td>
+                      <td>{row.primary_affiliation || <span className="faint">not recorded</span>}</td>
+                      <td>{[row.city, row.state].filter(Boolean).join(', ') || <span className="faint">not recorded</span>}</td>
+                      <td className="n">{row.linked_record_count}</td>
+                      <td className="n">{row.source_count || 0}</td>
+                      <td>
+                        <span className="mbar" title={`Missing: ${(row.missing_fields || []).join(', ') || 'nothing'}`}>
+                          <span className="tr">
+                            <i style={{ width: `${pct}%`, background: color }} />
+                          </span>
+                          <span className="num">{pct}%</span>
+                        </span>
+                      </td>
+                      <td className="n">{row.pending_item_count ? <span className="pill warn">{row.pending_item_count}</span> : <span className="faint">0</span>}</td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       ) : null}
-
-      <DoctorDrawer
-        doctorId={doctorId || null}
-        open={!!doctorId}
-        onOpenChange={(open) => {
-          if (!open) setMany({ doctor_id: null, tab: null });
-        }}
-        tab={tab}
-        onTabChange={(next) => setMany({ tab: next })}
-      />
-    </div>
+    </>
   );
 }

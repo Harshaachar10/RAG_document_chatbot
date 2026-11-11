@@ -509,13 +509,14 @@ def _npi_status(
         return {"status": "INVALID", "owner": None, "digits": field.get("digits") or "", "conflict": field.get("reason") or field.get("status"), "field": field}
     owner = catalog["by_npi"].get(field["digits"])
     if not owner:
-        return {"status": "NOT_IN_REFERENCE", "owner": None, "digits": field["digits"], "conflict": "", "field": field}
+        return {"status": "REVIEW", "owner": None, "digits": field["digits"], "conflict": "not_in_registry", "field": field}
     conflict = _identity_conflict(std, owner, catalog)
     if conflict:
         return {"status": "MISMATCH", "owner": owner, "digits": field["digits"], "conflict": conflict, "field": field}
     if owner.get("deactivated"):
         return {"status": "DEACTIVATED", "owner": owner, "digits": field["digits"], "conflict": "", "field": field}
-    return {"status": "VERIFIED", "owner": owner, "digits": field["digits"], "conflict": "", "field": field}
+    status = "VERIFIED_AFTER_CLEANING" if field.get("recovered") else "VERIFIED"
+    return {"status": status, "owner": owner, "digits": field["digits"], "conflict": "", "field": field}
 
 
 def _identity_conflict(std: Dict[str, Any], owner: Dict[str, Any], catalog: Dict[str, Any]) -> str:
@@ -673,7 +674,7 @@ def _decide(
     status = npi_info.get("status")
     owner = npi_info.get("owner")
 
-    if status in {"VERIFIED", "DEACTIVATED"} and owner:
+    if status in {"VERIFIED", "VERIFIED_AFTER_CLEANING", "DEACTIVATED"} and owner:
         chosen = next((row for row in ranked if row["target_id"] == owner["doctor_id"]), None)
         if chosen and not chosen.get("hard_stops"):
             return {
@@ -870,7 +871,7 @@ def _payment_action(base: Dict[str, Any], npi_info: Dict[str, Any], org_record: 
     if status in {"MISSING", "PLACEHOLDER"} and not doctor:
         # Keep unmatched so a later provisional cluster can claim the person.
         return {**base, "action": "UNMATCHED", "queue": None, "reason": "Payment has no registry doctor yet."}
-    if status in {"VERIFIED", "DEACTIVATED"} and base.get("action") == "AUTO_LINK":
+    if status in {"VERIFIED", "VERIFIED_AFTER_CLEANING", "DEACTIVATED"} and base.get("action") == "AUTO_LINK":
         return {**base, "reason": "Payment identity agrees with the registry. Linked. Filed value was not changed."}
     if base.get("action") == "REVIEW":
         return {**base, "action": "COMPLIANCE_REVIEW", "queue": "compliance"}
@@ -947,7 +948,7 @@ def resolve_records(records: List[Dict[str, Any]], nppes_index: Dict[str, Dict[s
             continue
         info = _npi_status(rec, catalog, std)
         owner = info.get("owner")
-        if info.get("status") not in {"VERIFIED", "DEACTIVATED"} or not owner:
+        if info.get("status") not in {"VERIFIED", "VERIFIED_AFTER_CLEANING", "DEACTIVATED"} or not owner:
             continue
         street_rec = _org_key(std.get("address") or "")
         street_doc = _org_key(owner.get("address") or "")
@@ -1062,8 +1063,25 @@ def resolve_records(records: List[Dict[str, Any]], nppes_index: Dict[str, Dict[s
             decision["queue"] = "compliance"
             decision["auto"] = False
             decision["reason"] = "Payment has no usable doctor identity. Filed value was not changed."
+    from app.identity.grow import assign_rounds, score_pair_splink
+
+    growth = assign_rounds(decisions, catalog, max_rounds=5)
+    phone_counts = catalog.get("phone_counts") or {}
+    for decision in decisions:
+        doctor = catalog["by_id"].get(decision.get("target_id") or "")
+        std = decision.get("standardized") or {}
+        if not doctor:
+            decision["splink_score"] = None
+            continue
+        shared = bool(std.get("phone")) and phone_counts.get(std.get("phone"), 0) > 1
+        scored = score_pair_splink(std, doctor, phone_shared=shared)
+        decision["splink_score"] = scored["probability"]
+        decision["splink_levels"] = scored["levels"]
+        decision["score_model"] = "splink"
     goldens = _build_goldens(prepared, decisions, catalog)
     metrics = _metrics(prepared, decisions, goldens, catalog, conflict_ids)
+    metrics["rounds"] = growth["rounds"]
+    metrics["search"] = growth["search"]
     notes = [d for d in decisions if d.get("source_key") == "notes"]
     return {
         "decisions": decisions,
@@ -1072,6 +1090,8 @@ def resolve_records(records: List[Dict[str, Any]], nppes_index: Dict[str, Dict[s
         "metrics": metrics,
         "notes": notes,
         "lineage": _lineage(prepared, decisions, goldens),
+        "known_values": growth["known_values"],
+        "rounds": growth["rounds"],
     }
 
 
@@ -1432,7 +1452,20 @@ def _metrics(records, decisions, goldens, catalog, conflict_ids) -> Dict[str, An
         g for g in goldens if g.get("npi") and g["golden_id"] not in linked_doctors and not g.get("provisional")
     ]
     provisional = [g for g in goldens if g.get("provisional") or not g.get("npi")]
-    npi_counts = {key: 0 for key in ("GROUP_NPI", "INVALID", "PLACEHOLDER", "DEACTIVATED", "MISMATCH", "VERIFIED", "MISSING")}
+    npi_counts = {
+        key: 0
+        for key in (
+            "GROUP_NPI",
+            "INVALID",
+            "PLACEHOLDER",
+            "DEACTIVATED",
+            "MISMATCH",
+            "REVIEW",
+            "VERIFIED",
+            "VERIFIED_AFTER_CLEANING",
+            "MISSING",
+        )
+    }
     for decision in decisions:
         status = decision.get("npi_status")
         if status in npi_counts:

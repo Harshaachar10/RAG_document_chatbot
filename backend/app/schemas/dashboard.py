@@ -5,12 +5,19 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, ConfigDict, Field
 
 
+class KpiPart(BaseModel):
+    label: str
+    value: int
+
+
 class KpiCard(BaseModel):
     key: str
     label: str
     value: int
     secondary_value: Optional[int] = None
     display: str
+    detail: Optional[str] = None
+    parts: List[KpiPart] = Field(default_factory=list)
     tooltip: str
     href: str
     filters: Dict[str, Any] = Field(default_factory=dict)
@@ -34,6 +41,7 @@ class DashboardSummary(BaseModel):
     source_coverage: List[Dict[str, Any]] = Field(default_factory=list)
     recent_decisions: List[Dict[str, Any]] = Field(default_factory=list)
     upload_batch_count: int = 0
+    safety_alarms: List[Dict[str, Any]] = Field(default_factory=list)
 
 
 class SourceBreakdownSegment(BaseModel):

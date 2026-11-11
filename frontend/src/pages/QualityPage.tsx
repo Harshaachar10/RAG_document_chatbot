@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { getApiBaseUrl } from '../api/client';
+import { apiFetch } from '../api/client';
 import { fetchActivity, fetchQualitySummary } from '../api/sources';
 import { ErrorState } from '../components/ErrorState';
 import { FilterBar, FilterField, inputClass } from '../components/FilterBar';
@@ -14,6 +15,10 @@ export function QualityPage() {
   const search = get('search');
   const page = Number(get('page', '1'));
 
+  const searchQuery = useQuery({
+    queryKey: ['cleanup-runs-quality'],
+    queryFn: ({ signal }) => apiFetch<{ search: Record<string, number | string>; embedding: Record<string, string | number> }>('/cleanup/runs', { signal }),
+  });
   const qualityQuery = useQuery({
     queryKey: ['quality'],
     queryFn: ({ signal }) => fetchQualitySummary(signal),
@@ -29,15 +34,25 @@ export function QualityPage() {
     <div className="space-y-4">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">Quality & Audit</h1>
+          <h1 className="text-2xl font-semibold">Search Quality</h1>
           <p className="mt-1 text-sm text-muted">
-            Audit trail, pipeline runs, and upload history. Synthetic data only.
+            Filter, semantic, and learned-value links, plus the audit log. Synthetic data.
           </p>
         </div>
         <a className="rounded-md border border-border px-3 py-2 text-sm" href={`${getApiBaseUrl()}/exports/activity`}>
           Export CSV
         </a>
       </header>
+
+      {searchQuery.isLoading ? <Skeleton className="h-24 w-full" /> : null}
+      {searchQuery.data ? (
+        <section className="grid gap-3 md:grid-cols-4">
+          <Metric label="Filter only" value={Number(searchQuery.data.search?.filter_only ?? 0)} />
+          <Metric label="Semantic only" value={Number(searchQuery.data.search?.semantic_only ?? 0)} />
+          <Metric label="Both" value={Number(searchQuery.data.search?.both ?? 0)} />
+          <Metric label="Embedding status" value={String(searchQuery.data.embedding?.status || searchQuery.data.search?.semantic_status || 'unknown')} />
+        </section>
+      ) : null}
 
       <div className="flex gap-2">
         <button type="button" className={`rounded-md px-3 py-1.5 text-sm ${tab === 'audit' ? 'bg-primary text-white' : 'bg-slate-100'}`} onClick={() => setMany({ tab: 'audit' })}>Audit</button>
@@ -117,7 +132,7 @@ export function QualityPage() {
   );
 }
 
-function Metric({ label, value }: { label: string; value: number }) {
+function Metric({ label, value }: { label: string; value: number | string }) {
   return (
     <div className="rounded-[12px] border border-border bg-white p-4 shadow-sm">
       <div className="text-xs uppercase text-muted">{label}</div>

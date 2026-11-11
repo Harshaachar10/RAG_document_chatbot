@@ -124,6 +124,22 @@ async def create_doctor_ai_summary(
     return job
 
 
+@router.get("/{doctor_id}/known-values", operation_id="getDoctorKnownValues")
+def doctor_known_values(doctor_id: str, service: DoctorService = Depends(get_doctor_service)) -> Dict[str, Any]:
+    doctor = service.get_doctor(doctor_id)
+    return {"doctor_id": doctor_id, "items": doctor.get("known_values") or []}
+
+
+@router.get("/{doctor_id}/lineage", operation_id="getDoctorLineage")
+def doctor_lineage(doctor_id: str, service: DoctorService = Depends(get_doctor_service)) -> Dict[str, Any]:
+    return service.lineage_graph(doctor_id)
+
+
+@router.get("/{doctor_id}/similar", operation_id="getDoctorSimilar")
+def doctor_similar(doctor_id: str, service: DoctorService = Depends(get_doctor_service)) -> Dict[str, Any]:
+    return service.similar_records(doctor_id)
+
+
 @router.get("/{doctor_id}/review-history", operation_id="getDoctorReviewHistory")
 def doctor_review_history(doctor_id: str, service: DoctorService = Depends(get_doctor_service)) -> Dict[str, Any]:
     result = service.review_history(doctor_id)

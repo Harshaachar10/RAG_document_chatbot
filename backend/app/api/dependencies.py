@@ -73,6 +73,13 @@ def get_export_service() -> ExportService:
 
 
 @lru_cache
+def get_ask_service():
+    from app.services.ask_service import AskService
+
+    return AskService(get_repository())
+
+
+@lru_cache
 def get_ai_service() -> AiService:
     settings = get_settings()
     return AiService(get_repository(), settings, build_llm_client(settings))

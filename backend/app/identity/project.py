@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
+from app.identity.briefs import attach_briefs
 from app.identity.labels import review_question, source_label
 
 
@@ -35,6 +36,13 @@ def _attr(golden: Dict[str, Any], key: str) -> Optional[str]:
     block = (golden.get("attributes") or {}).get(key) or {}
     val = block.get("value")
     return str(val) if val not in (None, "") else None
+
+
+def _evidence_summary(golden: Dict[str, Any]) -> str:
+    count = int(golden.get("member_count") or 0)
+    sources = len(golden.get("sources") or [])
+    npi = golden.get("npi") or "no NPI"
+    return f"{count} linked records from {sources} sources. NPI {npi}."
 
 
 def _now() -> str:
@@ -140,6 +148,8 @@ def project_pipeline(result: Dict[str, Any]) -> Dict[str, Any]:
             "sources": g.get("sources") or [],
             "cluster_id": g.get("cluster_id"),
             "open_issue_count": 0,
+            "known_values": (result.get("known_values") or {}).get(did) or [],
+            "evidence_summary": _evidence_summary(g),
         }
         if org:
             affiliations[f"AFF-{did}"] = {
@@ -473,6 +483,7 @@ def project_pipeline(result: Dict[str, Any]) -> Dict[str, Any]:
             "severity": severity,
             "status": "pending",
             "source_record_id": d["uid"],
+            "record_id": d.get("record_id"),
             "candidate_doctor_id": cand_doctor,
             "proposed_field": "npi_link" if cand_doctor else None,
             "proposed_value": target,
@@ -562,6 +573,8 @@ def project_pipeline(result: Dict[str, Any]) -> Dict[str, Any]:
                 doc["credential"] = ",".join(creds)
         doc["license_states"] = sorted(states_set)
 
+    safety_alarms = attach_briefs(doctors, decisions)
+
     audit_events["AUD-pipeline"] = {
         "audit_id": "AUD-pipeline",
         "actor": "identity_pipeline",
@@ -583,6 +596,9 @@ def project_pipeline(result: Dict[str, Any]) -> Dict[str, Any]:
             {
                 "record_id": d.get("record_id"),
                 "uid": d.get("uid"),
+                "source_key": d.get("source_key"),
+                "stated_npi": d.get("stated_npi") or "",
+                "display_name": d.get("display_name"),
                 "action": d.get("action"),
                 "outcome": d.get("outcome"),
                 "npi_status": d.get("npi_status"),
@@ -596,9 +612,22 @@ def project_pipeline(result: Dict[str, Any]) -> Dict[str, Any]:
                 "contributions": d.get("contributions") or [],
                 "proposed_changes": d.get("proposed_changes") or [],
                 "safety": d.get("safety") or {},
+                "round": d.get("round"),
+                "found_by": d.get("found_by") or [],
+                "route": d.get("route") or "",
+                "learned_value": bool(d.get("learned_value")),
+                "search_plan": d.get("search_plan"),
+                "splink_score": d.get("splink_score"),
+                "splink_levels": d.get("splink_levels") or [],
             }
             for d in decisions
         ],
+        "known_values": result.get("known_values") or {},
+        "cleanup_rounds": result.get("rounds") or [],
+        "source_profiles": result.get("profiles") or [],
+        "embedding_status": result.get("embedding") or {},
+        "search_quality": (result.get("metrics") or {}).get("search") or {},
+        "safety_alarms": safety_alarms,
         "doctors": doctors,
         "affiliations": affiliations,
         "aliases": aliases,

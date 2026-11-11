@@ -1,21 +1,16 @@
-import {
-  Activity,
-  ClipboardList,
-  Database,
-  FileUp,
-  LayoutDashboard,
-  NotebookPen,
-  ShieldCheck,
-  Users,
-} from 'lucide-react';
+import { ClipboardList, LayoutDashboard, Users } from 'lucide-react';
 
-export const NAV_ITEMS = [
-  { to: '/overview', label: 'Overview', icon: LayoutDashboard },
-  { to: '/upload', label: 'Upload & Match', icon: FileUp },
-  { to: '/golden-records', label: 'Golden Records', icon: Users },
-  { to: '/reviews', label: 'Review Center', icon: ClipboardList },
-  { to: '/payment-compliance', label: 'Payment Compliance', icon: ShieldCheck },
-  { to: '/notes-insights', label: 'Notes Insights', icon: NotebookPen },
-  { to: '/sources', label: 'Data Sources', icon: Database },
-  { to: '/quality', label: 'Quality & Audit', icon: Activity },
-] as const;
+export type NavChild = { to: string; label: string };
+
+export type NavItem = {
+  to: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  children?: NavChild[];
+};
+
+export const NAV_ITEMS: NavItem[] = [
+  { to: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/doctors', label: 'Golden Records', icon: Users },
+  { to: '/review', label: 'Review', icon: ClipboardList },
+];

@@ -23,6 +23,13 @@ def get_health(
         dataset_updated_at = max((s.get("updated_at") or "" for s in sources), default=None)
     run = (repo.state().get("pipeline_run") or {})
     dataset_updated_at = dataset_updated_at or run.get("finished_at")
+    search_configured = bool((settings.ai_search_endpoint or "").strip() and (settings.ai_search_key or "").strip() and settings.ai_search_enabled)
+    embeddings_ready = bool(
+        settings.embeddings_enabled
+        and (settings.embedding_deployment or settings.embedding_model_name)
+        and settings.azure_openai_endpoint.strip()
+        and settings.azure_openai_api_key.strip()
+    )
     return HealthResponse(
         status="ok",
         version=settings.app_version,
@@ -34,6 +41,10 @@ def get_health(
         ai_ready=settings.ai_ready,
         missing_ai_settings=settings.missing_azure_settings() if settings.analysis_mode == "azure" else [],
         data_classification="synthetic",
+        search_mode="azure" if search_configured else "local",
+        chat_ready=settings.ai_ready,
+        embeddings_ready=embeddings_ready,
+        search_ready=search_configured,
     )
 
 

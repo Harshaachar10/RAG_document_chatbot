@@ -9,6 +9,13 @@ from fastapi.testclient import TestClient
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
 
 
+@pytest.fixture(autouse=True)
+def _disable_live_models(monkeypatch):
+    """Unit tests stay deterministic and never call Azure embeddings or AI Search."""
+    monkeypatch.setenv("EMBEDDINGS_ENABLED", "false")
+    monkeypatch.setenv("AI_SEARCH_ENABLED", "false")
+
+
 @pytest.fixture()
 def client(tmp_path, monkeypatch):
     runtime_dir = tmp_path / "runtime"
@@ -36,6 +43,8 @@ def client(tmp_path, monkeypatch):
         deps.get_notes_service.cache_clear()
     if hasattr(deps, "get_upload_service"):
         deps.get_upload_service.cache_clear()
+    if hasattr(deps, "get_ask_service"):
+        deps.get_ask_service.cache_clear()
 
     monkeypatch.setenv("RUNTIME_DIRECTORY", str(runtime_dir))
     monkeypatch.setenv("ANALYSIS_MODE", "mock")

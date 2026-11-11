@@ -47,6 +47,7 @@ class IdentityRepository:
 
     def _compute_fingerprint(self) -> str:
         h = hashlib.sha256()
+        h.update(b"identity-schema-v4")
         root = self.data_path
         if not root.exists():
             return "empty"
@@ -207,5 +208,41 @@ class IdentityRepository:
         seed["snapshot_version"] = int(previous.get("snapshot_version") or 1) + 1
         for k, v in preserved.items():
             seed[k] = v
+        if previous.get("source_profiles"):
+            seed["source_profiles"] = previous.get("source_profiles")
+        seed["pipeline_cleared"] = False
         self.runtime.replace(seed)
         return self._pipeline_result.get("counts") or {}
+
+    def reset_demo(self) -> Dict[str, Any]:
+        """Clear pipeline output. Source files and approved profiles stay."""
+        previous = self.runtime.get()
+        profiles = previous.get("source_profiles") or []
+        sources = previous.get("sources_meta") or []
+
+        def mutator(state: Dict[str, Any]) -> Dict[str, Any]:
+            for key, value in list(state.items()):
+                if key in {"source_profiles", "sources_meta", "dataset_fingerprint", "idempotency"}:
+                    continue
+                if isinstance(value, dict):
+                    state[key] = {}
+                elif isinstance(value, list):
+                    state[key] = []
+            state["source_profiles"] = profiles
+            state["sources_meta"] = sources
+            state["pipeline_cleared"] = True
+            state["doctors"] = {}
+            state["source_records"] = {}
+            state["reviews"] = {}
+            state["match_decisions"] = []
+            state["pipeline_metrics"] = {}
+            state["pipeline_counts"] = {}
+            state["search_quality"] = {}
+            state["cleanup_rounds"] = []
+            return {"cleared": True, "profiles_kept": len(profiles)}
+
+        result = self.runtime.mutate(mutator)
+        cache = self.settings.runtime_path / "embedding_cache.json"
+        if cache.exists():
+            cache.unlink()
+        return result

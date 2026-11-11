@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Optional, Set
 from app.core.exceptions import ConflictError, NotFoundError, ValidationAppError
 from app.providers.mock_recommendations import MockRecommendationProvider
 from app.identity.labels import case_label, risk_rank, source_label
+from app.services.review_board import build_review_board
 from app.services.filtering import matches_search, paginate, sort_items
 from app.utils.dates import utc_now_iso
 from app.utils.links import is_linked_status
@@ -763,7 +764,11 @@ class ReviewService:
             }
             return response
 
-        return self.repo.runtime.mutate(mutator)
+        response = self.repo.runtime.mutate(mutator)
+        from app.identity.summary_jobs import refresh_profiles
+
+        refresh_profiles(self.repo, response.get("changed_doctor_ids") or [])
+        return response
 
     def _canonical_request(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         return {
@@ -854,6 +859,7 @@ class ReviewService:
         if doctor:
             doctor["updated_at"] = now
             doctor["version"] = int(doctor.get("version") or 1) + 1
+            doctor["is_new"] = True
 
     def _reject_hard_identity_conflict(self, state: Dict[str, Any], source_record_id: str, doctor_id: str) -> None:
         for constraint in (state.get("identity_constraints") or {}).values():
@@ -971,6 +977,111 @@ class ReviewService:
             "review_id": review.get("review_id"),
             "version": doctor["version"],
             "evidence_ids": [evidence_id] if evidence_id else [],
+        }
+
+    def workspace(self) -> Dict[str, Any]:
+        return build_review_board(self.repo.state())
+
+    def resolve_board_item(self, item_id: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+        action = (payload.get("action") or "").strip()
+        comment = (payload.get("comment") or "").strip()
+        allowed = {"approve_change", "reject_change", "route_safety", "leave_unmatched"}
+        if action not in allowed:
+            raise ValidationAppError("Unsupported queue action", details={"valid_actions": sorted(allowed)})
+        if not comment:
+            raise ValidationAppError("A reason is required")
+
+        def mutator(state: Dict[str, Any]) -> Dict[str, Any]:
+            board = build_review_board(state)
+            item = next((row for row in board["items"] if row["id"] == item_id), None)
+            if not item:
+                raise NotFoundError(f"Queue item {item_id} is not open")
+            now = utc_now_iso()
+            status = "approved" if action in {"approve_change", "route_safety"} else "rejected" if action == "reject_change" else "completed"
+            state.setdefault("queue_resolutions", {})[item_id] = {
+                "item_id": item_id,
+                "action": action,
+                "status": "routed" if action == "route_safety" else status,
+                "comment": comment,
+                "doctor_id": item.get("doctor_id"),
+                "at": now,
+            }
+            doctor_id = item.get("doctor_id")
+            changed: List[str] = []
+            if action == "approve_change" and doctor_id and doctor_id in state.get("doctors", {}):
+                self._apply_proposed_change(state, item, now, comment)
+                changed.append(doctor_id)
+            if doctor_id and action == "route_safety":
+                changed.append(doctor_id)
+            audit_id = f"AUD-QUEUE-{len(state.get('audit_events') or {}) + 1:05d}"
+            state.setdefault("audit_events", {})[audit_id] = {
+                "audit_id": audit_id,
+                "doctor_id": doctor_id,
+                "review_id": item.get("review_id"),
+                "action": action,
+                "actor_label": "Steward",
+                "summary": comment,
+                "occurred_at": now,
+                "is_seeded": False,
+            }
+            if doctor_id:
+                event_id = f"EVT-QUEUE-{len(state.get('events') or {}) + 1:06d}"
+                state.setdefault("events", {})[event_id] = {
+                    "event_id": event_id,
+                    "doctor_id": doctor_id,
+                    "event_type": "review_decision",
+                    "title": item.get("question"),
+                    "description": comment,
+                    "previous_value": (item.get("proposed") or {}).get("current"),
+                    "new_value": (item.get("proposed") or {}).get("proposed"),
+                    "recorded_at": now,
+                    "review_status": action,
+                    "quote": (item.get("proposed") or {}).get("quote") or (item.get("safety") or {}).get("quote"),
+                }
+            return {"item_id": item_id, "action": action, "changed_doctor_ids": changed, "audit_id": audit_id}
+
+        result = self.repo.runtime.mutate(mutator)
+        from app.identity.summary_jobs import refresh_profiles
+
+        refresh_profiles(self.repo, result.get("changed_doctor_ids") or [])
+        return result
+
+    def _apply_proposed_change(self, state: Dict[str, Any], item: Dict[str, Any], now: str, comment: str) -> None:
+        doctor_id = item.get("doctor_id")
+        proposed = item.get("proposed") or {}
+        doctor = (state.get("doctors") or {}).get(doctor_id)
+        if not doctor:
+            return
+        value = proposed.get("proposed")
+        field = (proposed.get("field") or "").lower()
+        if value and field in {"practice", "affiliations"}:
+            updated = False
+            for affiliation in (state.get("affiliations") or {}).values():
+                if affiliation.get("doctor_id") == doctor_id and affiliation.get("is_primary"):
+                    affiliation["organization_name"] = value
+                    updated = True
+            if not updated:
+                key = f"AFF-LIVE-{doctor_id}"
+                state.setdefault("affiliations", {})[key] = {
+                    "affiliation_id": key,
+                    "doctor_id": doctor_id,
+                    "organization_name": value,
+                    "is_primary": True,
+                    "status": "current",
+                }
+        elif value and field == "status":
+            doctor["identity_status"] = value
+        doctor["is_new"] = True
+        doctor["updated_at"] = now
+        doctor["version"] = int(doctor.get("version") or 1) + 1
+        state.setdefault("field_provenance", {})[f"PRV-CHG-{item['id']}"] = {
+            "provenance_id": f"PRV-CHG-{item['id']}",
+            "doctor_id": doctor_id,
+            "field_name": proposed.get("field"),
+            "selected_value": value,
+            "selection_reason": comment,
+            "quote": proposed.get("quote"),
+            "version": doctor["version"],
         }
 
     def _evidence_for_record(self, state: Dict[str, Any], source_record_id: Optional[str]) -> Optional[str]:

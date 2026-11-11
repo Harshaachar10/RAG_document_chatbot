@@ -3,9 +3,9 @@ from __future__ import annotations
 
 def test_consolidated_duplicates_exclude_transactions(client):
     summary = client.get("/api/v1/dashboard/summary").json()
-    master = next(k for k in summary["kpis"] if k["key"] == "master_cleanup")
+    master = next(k for k in summary["kpis"] if k["key"] == "masters_fixed")
     assert master["value"] >= 0
-    resolved = next(k for k in summary["kpis"] if k["key"] == "resolved_to_npi")
+    resolved = next(k for k in summary["kpis"] if k["key"] == "records_resolved")
     assert resolved["value"] >= 0
 
 

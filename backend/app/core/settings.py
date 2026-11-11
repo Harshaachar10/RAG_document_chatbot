@@ -36,6 +36,17 @@ class Settings(BaseSettings):
     azure_openai_timeout_seconds: float = 45
     azure_openai_max_retries: int = 2
     azure_openai_max_concurrency: int = 2
+    # Chat model deployment is AZURE_OPENAI_DEPLOYMENT.
+    # Embedding model name and deployment use the names present in .env.
+    embedding_model_name: str = ""
+    embedding_deployment: str = ""
+    ai_search_endpoint: str = ""
+    ai_search_key: str = ""
+    ai_search_index: str = "doctor-identity"
+    embeddings_enabled: bool = True
+    ai_search_enabled: bool = True
+    match_max_rounds: int = 5
+    supervised_model_enabled: bool = False
     ai_max_source_records: int = 8
     ai_max_evidence: int = 80
     cors_origins: List[str] = Field(
@@ -103,6 +114,46 @@ class Settings(BaseSettings):
         return False
 
 
+def _stripped_dotenv() -> dict[str, str]:
+    """Read .env with stripped keys. Values are never logged."""
+    path = BACKEND_ROOT / ".env"
+    if not path.exists():
+        return {}
+    found: dict[str, str] = {}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        raw = line.strip()
+        if not raw or raw.startswith("#") or "=" not in raw:
+            continue
+        key, value = raw.split("=", 1)
+        found[key.strip()] = value.strip().strip('"').strip("'")
+    return found
+
+
 @lru_cache
 def get_settings() -> Settings:
-    return Settings()
+    settings = Settings()
+    extra = _stripped_dotenv()
+    mapping = {
+        "embedding_model_name": "embedding_model_name",
+        "EMBEDDING_MODEL_NAME": "embedding_model_name",
+        "AZURE_OPENAI_EMBEDDING_MODEL": "embedding_model_name",
+        "embedding_deployment": "embedding_deployment",
+        "EMBEDDING_DEPLOYMENT": "embedding_deployment",
+        "AZURE_OPENAI_EMBEDDING_DEPLOYMENT": "embedding_deployment",
+        "ai_search_endpoint": "ai_search_endpoint",
+        "AI_SEARCH_ENDPOINT": "ai_search_endpoint",
+        "AZURE_SEARCH_ENDPOINT": "ai_search_endpoint",
+        "ai_search_key": "ai_search_key",
+        "AI_SEARCH_KEY": "ai_search_key",
+        "AZURE_SEARCH_KEY": "ai_search_key",
+        "ai_search_index": "ai_search_index",
+        "AI_SEARCH_INDEX": "ai_search_index",
+        "AZURE_SEARCH_INDEX": "ai_search_index",
+    }
+    updates: dict[str, str] = {}
+    for source, dest in mapping.items():
+        if extra.get(source) and not str(getattr(settings, dest) or "").strip():
+            updates[dest] = extra[source]
+    if updates:
+        settings = settings.model_copy(update=updates)
+    return settings

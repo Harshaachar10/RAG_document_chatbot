@@ -50,7 +50,7 @@ export function NotesInsightsPage() {
               header: 'Resolved doctor',
               render: (r) =>
                 r.resolved_doctor_id ? (
-                  <Link className="text-primary hover:underline" to={`/golden-records?doctor_id=${r.resolved_doctor_id}`}>
+                  <Link className="text-primary hover:underline" to={`/doctors?doctor_id=${r.resolved_doctor_id}`}>
                     {displayValue(r.resolved_doctor_name)}
                   </Link>
                 ) : (

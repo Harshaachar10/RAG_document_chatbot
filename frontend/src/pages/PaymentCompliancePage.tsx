@@ -62,7 +62,7 @@ export function PaymentCompliancePage() {
               key: 'open',
               header: 'Case',
               render: (r) => (
-                <Link className="text-primary hover:underline" to={`/reviews/${r.review_id}`}>
+                <Link className="text-primary hover:underline" to={`/review/${r.review_id}`}>
                   Open
                 </Link>
               ),

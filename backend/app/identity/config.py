@@ -110,6 +110,7 @@ class MatchThresholds:
     auto_link: float = 0.95
     review_low: float = 0.70
     clear_winner_margin: float = 0.08
+    max_rounds: int = 5
 
 
 FIELD_WEIGHTS: Dict[str, float] = {

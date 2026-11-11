@@ -39,6 +39,10 @@ class HealthResponse(BaseModel):
     ai_ready: bool = False
     missing_ai_settings: List[str] = Field(default_factory=list)
     data_classification: str = "synthetic"
+    search_mode: str = "local"
+    chat_ready: bool = False
+    embeddings_ready: bool = False
+    search_ready: bool = False
 
 
 class ReferenceDataResponse(BaseModel):

@@ -86,8 +86,10 @@ def create_app() -> FastAPI:
 
     @app.on_event("startup")
     def on_startup() -> None:
-        # Initialize CSV repo + runtime state
-        get_repository()
+        repo = get_repository()
+        from app.identity.summary_jobs import schedule_summaries
+
+        schedule_summaries([doctor["doctor_id"] for doctor in repo.list_doctors()], force=False)
 
     app.include_router(api_router, prefix=settings.api_prefix)
     return app

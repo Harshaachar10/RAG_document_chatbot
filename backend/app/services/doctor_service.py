@@ -1,8 +1,24 @@
 from __future__ import annotations
 
+import re
 from typing import Any, Dict, List, Optional, Set
 
+_NAME_STOP = {"md", "do", "dr", "jr", "sr", "phd", "np", "pa", "rn"}
+
+
+def _name_tokens(doctor: Dict[str, Any]) -> Set[str]:
+    parts = [
+        doctor.get("preferred_name") or "",
+        doctor.get("given_name") or "",
+        doctor.get("family_name") or "",
+    ]
+    for alias in doctor.get("aliases") or []:
+        parts.append(alias.get("name") if isinstance(alias, dict) else str(alias))
+    text = " ".join(str(part) for part in parts).lower()
+    return {token for token in re.split(r"[^a-z]+", text) if len(token) > 1 and token not in _NAME_STOP}
+
 from app.core.exceptions import NotFoundError, ValidationAppError
+from app.identity.completeness import completeness
 from app.services.filtering import matches_search, paginate, sort_items
 from app.utils.links import display_npi_status, is_linked_status
 
@@ -98,17 +114,22 @@ class DoctorService:
                 if not missing:
                     continue
 
+            primary = next((a for a in affs if a.get("is_primary")), affs[0] if affs else None)
+            former = doctor.get("former_names") or []
+            former_name = former[0] if former and isinstance(former[0], str) else None
+            pct, missing_fields = completeness(doctor, has_practice=bool(primary and primary.get("organization_name")))
             search_blob = " ".join(
                 [
                     doctor.get("preferred_name") or "",
                     doctor.get("doctor_id") or "",
+                    doctor.get("official_npi") or "",
+                    former_name or "",
                     " ".join(alias_map.get(did, [])),
                 ]
             )
             if search and not matches_search(search_blob, search):
                 continue
 
-            primary = next((a for a in affs if a.get("is_primary")), affs[0] if affs else None)
             accepted = [l for l in links_by_doctor.get(did, []) if is_linked_status(l.get("link_status"))]
             items.append({
                 "doctor_id": did,
@@ -133,6 +154,11 @@ class DoctorService:
                 "license_states": doctor.get("license_states") or [],
                 "source_count": len(doctor.get("sources") or []),
                 "badge": doctor.get("badge") or display_npi_status(doctor.get("npi_status")),
+                "completeness": pct,
+                "missing_fields": missing_fields,
+                "provisional": bool(doctor.get("provisional") or not doctor.get("official_npi")),
+                "former_name": former_name,
+                "is_new": bool(doctor.get("is_new")),
             })
 
         allow = {
@@ -228,6 +254,12 @@ class DoctorService:
             "credential_details": self._credential_for(doctor_id),
             "updated_at": doctor.get("updated_at"),
             "version": int(doctor.get("version") or 1),
+            "known_values": doctor.get("known_values") or [],
+            "evidence_summary": doctor.get("evidence_summary") or "",
+            "former_names": doctor.get("former_names") or [],
+            "open_issues": int(doctor.get("open_issue_count") or len(pending_reviews)),
+            "profile_brief": (doctor.get("profile_brief") or {}).get("text") if isinstance(doctor.get("profile_brief"), dict) else doctor.get("profile_brief"),
+            "alarms": doctor.get("alarms") or [],
         }
 
     def _credential_for(self, doctor_id: str) -> Optional[str]:
@@ -251,8 +283,9 @@ class DoctorService:
             if not link:
                 continue
             evid_ids = [e["evidence_id"] for e in evidence if e.get("source_record_id") == rec["source_record_id"]]
+            public = {key: value for key, value in rec.items() if key not in {"raw"}}
             items.append({
-                **rec,
+                **public,
                 "source_name": sources.get(rec.get("source_id"), {}).get("source_name"),
                 "link_status": link.get("link_status"),
                 "doctor_id": doctor_id,
@@ -453,6 +486,92 @@ class DoctorService:
             "side_by_side": side_by_side,
             "evidence_rows": evidence_rows,
         }
+
+    def lineage_graph(self, doctor_id: str) -> Dict[str, Any]:
+        if not self.repo.get_doctor(doctor_id):
+            raise NotFoundError(f"Doctor {doctor_id} not found")
+        state = self.repo.state()
+        decisions = [d for d in (state.get("match_decisions") or []) if d.get("target_id") == doctor_id]
+        nodes = [
+            {
+                "id": f"doctor-{doctor_id}",
+                "kind": "doctor",
+                "label": self.repo.get_doctor(doctor_id).get("preferred_name") or "Doctor",
+                "status": "Confirmed",
+            }
+        ]
+        edges = []
+        sources_seen = set()
+        for decision in decisions:
+            source = decision.get("source_key") or "source"
+            source_node = f"source-{source}"
+            if source not in sources_seen:
+                sources_seen.add(source)
+                nodes.append({"id": source_node, "kind": "source", "label": source.replace("_", " ").title(), "status": "Confirmed"})
+            record_node = f"record-{decision.get('uid')}"
+            action = decision.get("action") or ""
+            status = "Pending review" if action in {"REVIEW", "COMPLIANCE_REVIEW"} else "Confirmed"
+            if action in {"NOT_A_PERSON", "ORGANIZATION"}:
+                status = "Rejected"
+            nodes.append(
+                {
+                    "id": record_node,
+                    "kind": "record",
+                    "label": decision.get("record_id") or "Record",
+                    "status": status,
+                    "round": decision.get("round"),
+                    "found_by": decision.get("found_by") or [],
+                    "route": decision.get("route") or "",
+                    "score": decision.get("score"),
+                    "splink_score": decision.get("splink_score"),
+                    "reason": decision.get("reason") or "",
+                    "npi_status": decision.get("npi_status"),
+                    "contributions": decision.get("splink_levels") or decision.get("contributions") or [],
+                }
+            )
+            decision_node = f"decision-{decision.get('uid')}"
+            nodes.append(
+                {
+                    "id": decision_node,
+                    "kind": "decision",
+                    "label": action.replace("_", " ").title() if action else "Decision",
+                    "status": status,
+                    "round": decision.get("round"),
+                    "route": decision.get("route") or "",
+                    "score": decision.get("splink_score") if decision.get("splink_score") is not None else decision.get("score"),
+                    "reason": decision.get("reason") or "",
+                }
+            )
+            edges.append({"id": f"e-{source}-{record_node}", "source": source_node, "target": record_node})
+            edges.append({"id": f"e-{record_node}-{decision_node}", "source": record_node, "target": decision_node})
+            edges.append({"id": f"e-{decision_node}-doctor", "source": decision_node, "target": f"doctor-{doctor_id}"})
+        return {"doctor_id": doctor_id, "nodes": nodes, "edges": edges}
+
+    def similar_records(self, doctor_id: str) -> Dict[str, Any]:
+        doctor = self.repo.get_doctor(doctor_id)
+        if not doctor:
+            raise NotFoundError(f"Doctor {doctor_id} not found")
+        mine = _name_tokens(doctor)
+        others = []
+        for other in self.repo.list_doctors():
+            if other["doctor_id"] == doctor_id:
+                continue
+            shared = mine & _name_tokens(other)
+            if len(shared) < 2:
+                continue
+            if (other.get("official_npi") or "") == (doctor.get("official_npi") or ""):
+                continue
+            others.append(
+                {
+                    "doctor_id": other["doctor_id"],
+                    "name": other.get("preferred_name"),
+                    "npi": other.get("official_npi"),
+                    "specialty": other.get("specialty"),
+                    "location": ", ".join(x for x in [other.get("city"), other.get("state")] if x),
+                    "reason": "Same-name doctor. Hard stops keep this person separate.",
+                }
+            )
+        return {"doctor_id": doctor_id, "doctors": others, "records": []}
 
     def review_history(self, doctor_id: str) -> Dict[str, Any]:
         if not self.repo.get_doctor(doctor_id):

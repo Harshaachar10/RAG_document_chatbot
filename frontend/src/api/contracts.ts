@@ -28,6 +28,10 @@ export interface HealthResponse {
   ai_ready?: boolean;
   missing_ai_settings?: string[];
   data_classification?: string;
+  search_mode?: string;
+  chat_ready?: boolean;
+  embeddings_ready?: boolean;
+  search_ready?: boolean;
 }
 
 export interface ReferenceData {
@@ -42,12 +46,19 @@ export interface ReferenceData {
   defaults: Record<string, unknown>;
 }
 
+export interface KpiPart {
+  label: string;
+  value: number;
+}
+
 export interface KpiCard {
   key: string;
   label: string;
   value: number;
   secondary_value?: number | null;
   display: string;
+  detail?: string | null;
+  parts?: KpiPart[];
   tooltip: string;
   href: string;
   filters: Record<string, unknown>;
@@ -66,6 +77,13 @@ export interface DashboardSummary {
   recent_changes: Array<Record<string, unknown>>;
   source_coverage: Array<Record<string, unknown>>;
   recent_decisions: Array<Record<string, unknown>>;
+  upload_batch_count?: number;
+  flow?: Array<{ key: string; label: string; value: number; href: string }>;
+  beyond_npi?: Record<string, string | number>;
+  examples?: Array<{ kind: string; title: string; detail: string; href: string }>;
+  safety_alarms?: Array<Record<string, unknown>>;
+  before_after?: Record<string, string | number>;
+  story?: Record<string, unknown>;
 }
 
 export interface SourceBreakdownResponse {
@@ -98,6 +116,11 @@ export interface DoctorListItem {
   master_id?: string | null;
   aliases?: string[];
   alias_count?: number;
+  completeness?: number;
+  missing_fields?: string[];
+  provisional?: boolean;
+  former_name?: string | null;
+  is_new?: boolean;
   credential?: string | null;
   license_states?: string[];
   source_count?: number;
@@ -132,6 +155,12 @@ export interface DoctorSummary {
   credential_details?: string | null;
   updated_at?: string | null;
   version: number;
+  known_values?: Array<Record<string, unknown>>;
+  evidence_summary?: string | null;
+  profile_brief?: string | null;
+  alarms?: Array<Record<string, unknown>>;
+  former_names?: string[];
+  open_issues?: number;
 }
 
 export interface HistoryEvent {
@@ -225,6 +254,8 @@ export interface ReviewListItem {
   assignment_status?: string | null;
   assignment_comment?: string | null;
   assigned_at?: string | null;
+  record_id?: string | null;
+  question?: string | null;
 }
 
 export interface ReviewDetail {
@@ -359,6 +390,8 @@ export interface DemoRun {
   errors: string[];
   step_labels: string[];
   result_counts?: Record<string, number> | null;
+  stages?: Array<{ key: string; label: string; detail?: string }>;
+  result_summary?: string | null;
 }
 
 export interface QualitySummary {

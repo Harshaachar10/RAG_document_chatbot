@@ -28,6 +28,11 @@ class DoctorListItem(BaseModel):
     license_states: List[str] = Field(default_factory=list)
     aliases: List[str] = Field(default_factory=list)
     alias_count: int = 0
+    completeness: int = 0
+    missing_fields: List[str] = Field(default_factory=list)
+    provisional: bool = False
+    former_name: Optional[str] = None
+    is_new: bool = False
 
 
 class DoctorSummary(BaseModel):
@@ -58,6 +63,12 @@ class DoctorSummary(BaseModel):
     credential_details: Optional[str] = None
     updated_at: Optional[str] = None
     version: int = 1
+    known_values: List[Dict[str, Any]] = Field(default_factory=list)
+    evidence_summary: Optional[str] = None
+    former_names: List[str] = Field(default_factory=list)
+    open_issues: int = 0
+    profile_brief: Optional[str] = None
+    alarms: List[Dict[str, Any]] = Field(default_factory=list)
 
 
 class AliasItem(BaseModel):

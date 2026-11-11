@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -20,3 +20,5 @@ class DemoRun(BaseModel):
     errors: List[str] = Field(default_factory=list)
     step_labels: List[str] = Field(default_factory=list)
     result_counts: Optional[dict] = None
+    stages: List[Dict[str, Any]] = Field(default_factory=list)
+    result_summary: Optional[str] = None

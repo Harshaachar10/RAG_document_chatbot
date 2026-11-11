@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 
 from app.services.filtering import matches_search, paginate
+from app.utils.dates import utc_now_iso
 
 
 def _job_counts(repo: Any) -> Dict[str, int]:
@@ -117,6 +118,103 @@ class QualityService:
                 continue
             items.append(row)
         items.sort(key=lambda a: a.get("occurred_at") or "", reverse=True)
+        page_items, total = paginate(items, page, page_size)
+        return {
+            "items": page_items,
+            "total": total,
+            "page": page,
+            "page_size": page_size,
+            "applied_filters": {"search": search},
+            "snapshot_version": self.repo.snapshot_version(),
+        }
+
+    def propose_threshold(self, threshold: float) -> Dict[str, Any]:
+        threshold = min(0.99, max(0.50, float(threshold)))
+
+        def mutator(state: Dict[str, Any]) -> Dict[str, Any]:
+            proposal = {
+                "threshold": threshold,
+                "margin": float(((state.get("pipeline_run") or {}).get("thresholds") or {}).get("clear_winner_margin") or 0.05),
+                "status": "pending_approval",
+                "at": utc_now_iso(),
+            }
+            state.setdefault("threshold_proposals", []).append(proposal)
+            return proposal
+
+        saved = self.repo.runtime.mutate(mutator)
+        return {"status": "pending_approval", "proposal": saved, "applied": False}
+
+    def simulate_threshold(self, threshold: float) -> Dict[str, Any]:
+        """Replay stored scores. Payments stay with compliance and are excluded. Labels are optional."""
+        threshold = min(0.99, max(0.50, float(threshold)))
+        state = self.repo.state()
+        configured = float(((state.get("pipeline_run") or {}).get("thresholds") or {}).get("auto_link") or 0.95)
+        margin_rule = float(((state.get("pipeline_run") or {}).get("thresholds") or {}).get("clear_winner_margin") or 0.05)
+        rows = []
+        labeled = 0
+        for decision in state.get("match_decisions") or []:
+            if decision.get("source_key") == "payments":
+                continue
+            score = decision.get("splink_score")
+            if score is None:
+                score = decision.get("score")
+            if score is None:
+                continue
+            try:
+                score_f = float(score)
+            except (TypeError, ValueError):
+                continue
+            margin = decision.get("margin")
+            margin_f = float(margin) if isinstance(margin, (int, float)) else margin_rule
+            label = decision.get("label_correct")
+            if isinstance(label, bool):
+                labeled += 1
+            rows.append({"score": score_f, "margin": margin_f, "correct": label if isinstance(label, bool) else None})
+
+        def auto_at(th: float) -> List[Dict[str, Any]]:
+            return [row for row in rows if row["score"] >= th and row["margin"] >= margin_rule]
+
+        current_auto = auto_at(configured)
+        proposed = auto_at(threshold)
+        current_people = [row for row in rows if row["score"] >= 0.70 and row not in current_auto]
+        people = [row for row in rows if row["score"] >= 0.70 and row not in proposed]
+        measurable = labeled == len(rows) and len(rows) > 0
+        wrong = sum(1 for row in proposed if row["correct"] is False) if measurable else None
+        precision = None
+        if measurable and proposed:
+            precision = round((len(proposed) - (wrong or 0)) / len(proposed), 3)
+        buckets = []
+        start = 50
+        while start < 100:
+            lo = start / 100
+            hi = (start + 5) / 100
+            chunk = [row for row in rows if lo <= row["score"] < hi or (start == 95 and row["score"] >= lo)]
+            buckets.append(
+                {
+                    "from": lo,
+                    "to": min(hi, 1),
+                    "count": len(chunk),
+                    "right": sum(1 for row in chunk if row["correct"] is True) if measurable else None,
+                    "wrong": sum(1 for row in chunk if row["correct"] is False) if measurable else None,
+                }
+            )
+            start += 5
+        return {
+            "threshold": threshold,
+            "configured_threshold": configured,
+            "margin": margin_rule,
+            "automatic": len(proposed),
+            "automatic_delta": len(proposed) - len(current_auto),
+            "to_people": len(people),
+            "to_people_delta": len(people) - len(current_people),
+            "overmerges": wrong,
+            "precision": precision,
+            "measurable": measurable,
+            "message": None if measurable else "Accuracy can't be measured yet. Reviewer decisions or a separate scoring step are needed before precision is known.",
+            "histogram": buckets,
+            "scored_records": len(rows),
+            "payments_excluded": True,
+        }
         page_items, total = paginate(items, page, page_size)
         return {
             "items": page_items,

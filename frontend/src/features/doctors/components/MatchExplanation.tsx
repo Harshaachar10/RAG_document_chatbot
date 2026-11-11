@@ -15,10 +15,6 @@ export function MatchExplanation({
       <section className="rounded-[12px] border border-border bg-white p-4 shadow-sm">
         <h3 className="text-sm font-semibold">Why these records may belong together</h3>
         <p className="mt-2 text-sm">{data.summary}</p>
-        <div className="mt-3 rounded-md border border-sky-200 bg-sky-50 p-3">
-          <div className="text-xs font-semibold uppercase tracking-wide text-sky-900">{data.label || 'Linked comparison'}</div>
-          <p className="mt-1 text-sm text-sky-950">{data.simulated_recommendation}</p>
-        </div>
         <dl className="mt-3 grid gap-2 text-sm md:grid-cols-3">
           <div><dt className="text-muted">Decision method</dt><dd className="font-medium">{displayValue(data.decision_method)}</dd></div>
           <div><dt className="text-muted">Review status</dt><dd className="font-medium">{displayValue(data.review_status, 'n/a')}</dd></div>

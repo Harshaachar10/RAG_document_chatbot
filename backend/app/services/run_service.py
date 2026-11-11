@@ -12,15 +12,52 @@ from app.utils.links import is_linked_status
 
 
 STEPS = [
-    ("ingest", "Ingest heterogeneous source CSVs"),
-    ("standardize", "Standardize names, phones, dates, specialties"),
-    ("npi_check", "Validate NPIs and look up NPPES reference"),
-    ("candidates", "Block candidate pairs"),
-    ("score", "Score candidates with explainable weights"),
-    ("route", "Apply hard stops and route decisions"),
-    ("golden", "Assemble golden records"),
-    ("complete", "Complete"),
+    ("files", "Files read"),
+    ("privacy", "Patient data protected"),
+    ("npi", "NPIs checked"),
+    ("embeddings", "Descriptions and embeddings"),
+    ("layer1", "Layer 1 seed"),
+    ("layer2", "Layer 2"),
+    ("sweep", "Final sweep"),
+    ("summaries", "Summaries"),
+    ("done", "Done"),
 ]
+
+
+def _stages_from(state: Dict[str, Any]) -> List[Dict[str, Any]]:
+    decisions = state.get("match_decisions") or []
+    records = state.get("source_records") or {}
+    rounds = state.get("cleanup_rounds") or []
+    layer1 = sum(1 for d in decisions if d.get("round") == 0 and d.get("action") in {"AUTO_LINK", "PROVISIONAL"})
+    later = [row for row in rounds if isinstance(row, dict) and int(row.get("round") or 0) >= 1]
+    layer2_bits = [
+        f"Iteration {row.get('round')}: {row.get('linked') or 0} records linked, {row.get('new_values') or 0} new values learned"
+        for row in later
+        if (row.get("linked") or 0) or (row.get("new_values") or 0) or row.get("stop_reason")
+    ]
+    embedding = state.get("embedding_status") or {}
+    return [
+        {"key": "files", "label": "Files read", "detail": f"{len(records)} records"},
+        {"key": "privacy", "label": "Patient data protected", "detail": "Patient fields redacted before model calls"},
+        {"key": "npi", "label": "NPIs checked", "detail": f"{len(decisions)} rows checked"},
+        {"key": "embeddings", "label": "Descriptions and embeddings", "detail": str(embedding.get("status") or "skipped")},
+        {"key": "layer1", "label": "Layer 1 seed", "detail": f"{layer1} records linked from verified NPIs"},
+        {"key": "layer2", "label": "Layer 2", "detail": "; ".join(layer2_bits) or "No later iteration linked a record"},
+        {"key": "sweep", "label": "Final sweep", "detail": (rounds[-1].get("stop_reason") if rounds else "") or "Sweep finished"},
+        {"key": "summaries", "label": "Summaries", "detail": f"{len(state.get('doctors') or {})} doctors"},
+        {"key": "done", "label": "Done", "detail": _summary_from(state)},
+    ]
+
+
+def _summary_from(state: Dict[str, Any]) -> str:
+    decisions = state.get("match_decisions") or []
+    if not decisions:
+        return "No pipeline output yet."
+    linked = sum(1 for d in decisions if d.get("action") in {"AUTO_LINK", "PROVISIONAL"})
+    review = sum(1 for d in decisions if d.get("action") in {"REVIEW", "COMPLIANCE_REVIEW"})
+    unmatched = sum(1 for d in decisions if d.get("action") == "UNMATCHED")
+    provisional = sum(1 for d in decisions if d.get("action") == "PROVISIONAL")
+    return f"{len(decisions)} records processed: {linked} linked, {review} for review, {provisional} provisional, {unmatched} unmatched."
 
 
 class RunService:
@@ -74,6 +111,8 @@ class RunService:
             "errors": [],
             "step_labels": [label for _, label in STEPS],
             "result_counts": counts,
+            "stages": _stages_from(self.repo.state()),
+            "result_summary": None,
         }
 
         def mutator(state: Dict[str, Any]) -> Dict[str, Any]:
@@ -91,7 +130,7 @@ class RunService:
         pipeline_counts: Dict[str, Any] = {}
         for idx, (step_key, label) in enumerate(STEPS):
             time.sleep(delay)
-            if step_key == "golden":
+            if step_key == "summaries":
                 try:
                     if hasattr(self.repo, "rerun_pipeline"):
                         pipeline_counts = self.repo.rerun_pipeline() or {}
@@ -116,6 +155,7 @@ class RunService:
                     run["completed_steps"] = i + 1
                     run["progress_percent"] = int(round(100 * (i + 1) / len(STEPS)))
                     run["message"] = f"{lbl}."
+                    run["stages"] = _stages_from(state)
                     run["updated_at"] = utc_now_iso()
                     if pipeline_counts:
                         run["result_counts"] = {
@@ -124,8 +164,9 @@ class RunService:
                         }
                     if i == len(STEPS) - 1:
                         run["status"] = "completed"
-                        run["result_url"] = "/golden-records"
-                        run["message"] = "Identity pipeline complete. Golden records and review queues refreshed."
+                        run["result_url"] = "/doctors"
+                        run["result_summary"] = _summary_from(state)
+                        run["message"] = run["result_summary"]
                     break
 
             try:

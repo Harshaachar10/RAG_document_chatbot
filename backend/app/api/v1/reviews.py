@@ -26,6 +26,19 @@ def list_reviewers(service: ReviewService = Depends(get_review_service)) -> Dict
     return service.list_reviewers()
 
 
+@router.get("/workspace", operation_id="getReviewWorkspace")
+def review_workspace(service: ReviewService = Depends(get_review_service)) -> Dict[str, Any]:
+    return service.workspace()
+
+
+@router.post("/board-decisions", operation_id="resolveReviewBoardItem")
+def resolve_board_item(
+    body: Dict[str, Any],
+    service: ReviewService = Depends(get_review_service),
+) -> Dict[str, Any]:
+    return service.resolve_board_item(str(body.get("item_id") or ""), body)
+
+
 @router.get("", operation_id="listReviews")
 def list_reviews(
     search: Optional[str] = None,

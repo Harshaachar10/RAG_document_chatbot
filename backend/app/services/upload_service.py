@@ -361,6 +361,14 @@ class UploadService:
             }
 
         self.repo.runtime.mutate(mutator)
+        from app.identity.summary_jobs import refresh_profiles
+
+        touched = {
+            result.get("doctor_id")
+            for result in (batch.get("results") or [])
+            if result.get("doctor_id")
+        }
+        refresh_profiles(self.repo, touched)
         return self.get_batch(batch_id)
 
     def rollback(self, batch_id: str) -> Dict[str, Any]:

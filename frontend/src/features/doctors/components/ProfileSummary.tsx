@@ -27,7 +27,7 @@ export function ProfileSummary({
         <button
           type="button"
           className="mt-3 text-sm font-medium text-primary hover:underline"
-          onClick={() => onViewEvidence?.('preferred_name')}
+          onClick={() => onViewEvidence?.('lineage')}
         >
           View evidence ({doctor.aliases.length || 1})
         </button>
@@ -38,8 +38,7 @@ export function ProfileSummary({
         <dl className="mt-3 space-y-2 text-sm">
           <Row label="Professional email" value={displayValue(doctor.professional_email)} />
           <Row label="Professional phone" value={displayValue(doctor.professional_phone)} />
-          <Row label="Official NPI" value="Not verified" />
-          <Row label="Fictional reference" value={displayValue(doctor.mock_npi_ref, 'None')} />
+          <Row label="Official NPI" value={doctor.official_npi ? `${doctor.official_npi} · ${doctor.npi_status}` : 'No NPI on file'} />
         </dl>
       </section>
 
@@ -85,7 +84,7 @@ export function ProfileSummary({
                   </div>
                 </div>
                 <Link
-                  to={`/reviews/${String(u.review_id)}`}
+                  to={`/review/${String(u.review_id)}`}
                   className="mt-2 inline-block text-sm font-medium text-primary hover:underline"
                 >
                   Open review

@@ -24,7 +24,7 @@ export function ReviewHistory({ items }: { items: Array<Record<string, unknown>>
               <td className="px-3 py-2">{formatDateTime(String(row.occurred_at || ''))}</td>
               <td className="px-3 py-2">
                 {row.review_id ? (
-                  <Link className="text-primary hover:underline" to={`/reviews/${String(row.review_id)}`}>
+                  <Link className="text-primary hover:underline" to={`/review/${String(row.review_id)}`}>
                     {String(row.review_id)}
                   </Link>
                 ) : '—'}

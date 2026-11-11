@@ -35,7 +35,15 @@ class NotesService:
             meta = by_uid.get(rec["source_record_id"]) or {}
             text = meta.get("redacted_note") or rec.get("note_text") or ""
             mention = self._guess_doctor_mention(text, doctors)
-            ae_flags = [p.pattern for p in AE_PATTERNS if p.search(text)]
+            decision = next(
+                (
+                    row for row in (self.repo.state().get("match_decisions") or [])
+                    if row.get("record_id") == rec.get("source_record_id") or row.get("uid") == rec.get("source_record_id")
+                ),
+                {},
+            )
+            safety = decision.get("safety") or {}
+            ae_flags = [safety.get("reason")] if safety.get("flagged") else [p.pattern for p in AE_PATTERNS if p.search(text)]
             quote = self._first_sentence(text)
             items.append({
                 "note_id": rec.get("original_transaction_id") or rec["source_record_id"],
