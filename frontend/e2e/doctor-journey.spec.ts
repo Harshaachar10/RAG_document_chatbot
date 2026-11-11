@@ -47,7 +47,7 @@ test('dashboard, review, doctor, and how it works', async ({ page }) => {
   await page.screenshot({ path: 'e2e/screenshots/kept-separate.png' });
   await page.getByRole('tab', { name: 'History' }).click();
   await page.screenshot({ path: 'e2e/screenshots/history.png' });
-  await page.getByRole('tab', { name: 'Ask' }).click();
+  await page.getByRole('button', { name: 'Ask' }).click();
   await page.getByRole('button', { name: 'Why are the two Sarah Lees separate?' }).click();
   await expect(page.getByText(/separate|stored/i).first()).toBeVisible();
   await page.screenshot({ path: 'e2e/screenshots/ask.png' });

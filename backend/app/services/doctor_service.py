@@ -226,6 +226,7 @@ class DoctorService:
                 "evidence_hint": rev.get("source_record_id"),
             })
         previous_names = [a["name"] for a in aliases if a.get("alias_type") == "previous_name"]
+        pct, missing_fields = completeness(doctor, has_practice=bool(primary and primary.get("organization_name")))
         return {
             "doctor_id": doctor_id,
             "preferred_name": doctor.get("preferred_name"),
@@ -256,7 +257,13 @@ class DoctorService:
             "version": int(doctor.get("version") or 1),
             "known_values": doctor.get("known_values") or [],
             "evidence_summary": doctor.get("evidence_summary") or "",
-            "former_names": doctor.get("former_names") or [],
+            "former_names": doctor.get("former_names") or previous_names,
+            "license_states": doctor.get("license_states") or [],
+            "credential": doctor.get("credential") or self._credential_for(doctor_id),
+            "completeness": pct,
+            "missing_fields": missing_fields,
+            "provisional": bool(doctor.get("provisional") or not doctor.get("official_npi")),
+            "is_new": bool(doctor.get("is_new")),
             "open_issues": int(doctor.get("open_issue_count") or len(pending_reviews)),
             "profile_brief": (doctor.get("profile_brief") or {}).get("text") if isinstance(doctor.get("profile_brief"), dict) else doctor.get("profile_brief"),
             "alarms": doctor.get("alarms") or [],
@@ -276,6 +283,7 @@ class DoctorService:
             raise NotFoundError(f"Doctor {doctor_id} not found")
         links = {l["source_record_id"]: l for l in self.repo.list_links() if l.get("doctor_id") == doctor_id}
         sources = {s["source_id"]: s for s in self.repo.list_sources()}
+        decisions = {d.get("uid"): d for d in (self.repo.state().get("match_decisions") or []) if d.get("uid")}
         evidence = self.repo.list_evidence()
         items = []
         for rec in self.repo.list_source_records():
@@ -283,9 +291,16 @@ class DoctorService:
             if not link:
                 continue
             evid_ids = [e["evidence_id"] for e in evidence if e.get("source_record_id") == rec["source_record_id"]]
+            decision = decisions.get(rec["source_record_id"]) or {}
             public = {key: value for key, value in rec.items() if key not in {"raw"}}
             items.append({
                 **public,
+                "display_id": decision.get("record_id") or str(rec["source_record_id"]).split(":")[-1],
+                "match_score": decision.get("splink_score") if decision.get("splink_score") is not None else decision.get("score"),
+                "found_by": decision.get("found_by") or [],
+                "match_round": decision.get("round"),
+                "npi_status": decision.get("npi_status"),
+                "match_action": decision.get("action"),
                 "source_name": sources.get(rec.get("source_id"), {}).get("source_name"),
                 "link_status": link.get("link_status"),
                 "doctor_id": doctor_id,

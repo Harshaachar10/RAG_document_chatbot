@@ -161,6 +161,12 @@ export interface DoctorSummary {
   alarms?: Array<Record<string, unknown>>;
   former_names?: string[];
   open_issues?: number;
+  license_states?: string[];
+  credential?: string | null;
+  completeness?: number;
+  missing_fields?: string[];
+  provisional?: boolean;
+  is_new?: boolean;
 }
 
 export interface HistoryEvent {
@@ -218,6 +224,13 @@ export interface SourceRecordItem {
   evidence_ids: string[];
   normalized: Record<string, unknown>;
   linkage_explanation?: string | null;
+  display_id?: string | null;
+  match_score?: number | null;
+  found_by?: string[];
+  match_round?: number | null;
+  npi_status?: string | null;
+  match_action?: string | null;
+  amount_cents?: number | null;
 }
 
 export interface MatchExplanation {

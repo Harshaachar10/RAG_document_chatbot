@@ -34,7 +34,7 @@ export function AppLayout() {
   const howTab = params.get('how') || 'privacy';
 
   const title = useMemo(() => {
-    if (location.pathname.startsWith('/doctors/')) return 'Golden record';
+    if (location.pathname.startsWith('/doctors')) return 'Golden Records';
     if (location.pathname.startsWith('/doctors')) return 'Golden Records';
     if (location.pathname.startsWith('/review')) return 'Review';
     return 'Dashboard';

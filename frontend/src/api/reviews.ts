@@ -19,6 +19,7 @@ export type ReviewCase = {
   type_label: string;
   question: string;
   source_label: string;
+  source_key?: string | null;
   amount?: number | null;
   doctor_id?: string | null;
   doctor_name?: string | null;

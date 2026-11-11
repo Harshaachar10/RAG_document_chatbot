@@ -3,7 +3,6 @@ import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchDoctors, exportDoctorsUrl } from '../api/doctors';
 import type { DoctorListItem } from '../api/contracts';
-import { EmptyState } from '../components/EmptyState';
 import { ErrorState } from '../components/ErrorState';
 import { TableSkeleton } from '../components/Skeleton';
 import { useShell } from '../layouts/shell';
@@ -19,6 +18,14 @@ const CHIPS = [
   ['incomplete', 'Incomplete'],
   ['changed', 'Changed recently'],
 ] as const;
+
+function statusPill(row: DoctorListItem) {
+  const status = `${row.npi_status || ''} ${row.badge || ''}`.toLowerCase();
+  if (row.provisional) return <span className="pill new">Provisional</span>;
+  if (status.includes('deactivat')) return <span className="pill warn">NPI deactivated</span>;
+  if (row.pending_item_count > 0) return <span className="pill warn">Needs review</span>;
+  return <span className="pill ok">Verified</span>;
+}
 
 function naiveName(row: DoctorListItem) {
   return (row.preferred_name || '')
@@ -119,7 +126,7 @@ export function GoldenRecordsPage() {
               {rows.length === 0 ? (
                 <tr>
                   <td colSpan={10}>
-                    <EmptyState title="No doctors match" />
+                    <span className="muted">No doctors match.</span>
                   </td>
                 </tr>
               ) : (
@@ -134,15 +141,7 @@ export function GoldenRecordsPage() {
                         {row.former_name ? <div className="faint" style={{ fontSize: 12 }}>formerly {row.former_name}</div> : null}
                       </td>
                       <td className="mono">{row.official_npi || <span className="faint">none</span>}</td>
-                      <td>
-                        {row.provisional ? (
-                          <span className="pill new">Provisional</span>
-                        ) : row.pending_item_count ? (
-                          <span className="pill warn">Needs review</span>
-                        ) : (
-                          <span className="pill ok">{row.badge || row.npi_status}</span>
-                        )}
-                      </td>
+                      <td>{statusPill(row)}</td>
                       <td>{row.specialty || <span className="faint">not recorded</span>}</td>
                       <td>{row.primary_affiliation || <span className="faint">not recorded</span>}</td>
                       <td>{[row.city, row.state].filter(Boolean).join(', ') || <span className="faint">not recorded</span>}</td>

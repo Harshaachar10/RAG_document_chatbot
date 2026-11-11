@@ -5,18 +5,7 @@ import { useUrlState } from '../hooks/useUrlState';
 export function DoctorDetailPage() {
   const { doctorId = '' } = useParams();
   const { get, setMany } = useUrlState();
-  const tab = get('tab', 'summary');
-  const eventId = get('event_id') || null;
+  const tab = get('tab', 'overview');
 
-  return (
-    <div className="overflow-hidden rounded-[12px] border border-border bg-white shadow-sm">
-      <DoctorProfile
-        doctorId={doctorId}
-        mode="page"
-        tab={tab}
-        onTabChange={(next) => setMany({ tab: next })}
-        eventId={eventId}
-      />
-    </div>
-  );
+  return <DoctorProfile doctorId={doctorId} tab={tab} onTabChange={(next) => setMany({ tab: next })} />;
 }

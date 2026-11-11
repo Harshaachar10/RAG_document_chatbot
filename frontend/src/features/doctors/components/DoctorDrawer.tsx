@@ -7,26 +7,17 @@ export function DoctorDrawer({
   onOpenChange,
   tab,
   onTabChange,
-  eventId,
 }: {
   doctorId: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   tab: string;
   onTabChange: (tab: string) => void;
-  eventId?: string | null;
 }) {
   return (
     <Drawer open={open} onOpenChange={onOpenChange} title="Doctor profile" wide>
       {doctorId ? (
-        <DoctorProfile
-          doctorId={doctorId}
-          mode="drawer"
-          tab={tab}
-          onTabChange={onTabChange}
-          onClose={() => onOpenChange(false)}
-          eventId={eventId}
-        />
+        <DoctorProfile doctorId={doctorId} tab={tab} onTabChange={onTabChange} />
       ) : null}
     </Drawer>
   );
