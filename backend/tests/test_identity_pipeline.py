@@ -47,7 +47,7 @@ def test_pipeline_fixtures():
     # Chicago Lee (CRM without NPI) → Chicago NPPES, not Houston
     crm = by_id["CRM-7781"]
     assert crm["action"] == "AUTO_LINK"
-    assert crm["target_npi"] == "1309803819"
+    assert crm["target_npi"] == "1848459463"
     assert not str(crm["target_id"]).startswith("npi:")
 
     pay = by_id["P-3301"]

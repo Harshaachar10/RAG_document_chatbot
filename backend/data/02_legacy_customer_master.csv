@@ -1,8 +1,8 @@
-﻿master_id,full_name,npi,specialty_desc,primary_org,address,city,st,zip,phone,status,created_date,last_updated
-M1001,Sarah Lee MD,1309803819,Med Onc,Northview Oncology Associates,100 Example Ave,Chicago,IL,60601,3125550142,Active,2014-02-10,2023-03-14
+master_id,full_name,npi,specialty_desc,primary_org,address,city,st,zip,phone,status,created_date,last_updated
+M1001,Sarah Lee MD,1848459463,Med Onc,Northview Oncology Associates,100 Example Ave,Chicago,IL,60601,3125550142,Active,2014-02-10,2023-03-14
 M2044,Sarah Lee-Kim,,Oncology,Lakeshore Cancer Institute,200 Sample Blvd,Chicago,IL,60611,3125550143,Active,2026-03-01,2026-03-01
 M1002,Sarah Lee MD,1848459461,Dermatology,Bayline Dermatology,300 Test Rd,Houston,TX,77002,7135550110,Active,2015-05-20,2023-05-18
-M1003,Sara Li MD,1603219472,Med Onc,Westloop Cancer Care,1200 Sample Ave,Chicago,IL,60607,3125550177,Active,2016-01-11,2024-02-12
+M1003,Sara Li MD,1848459465,Med Onc,Westloop Cancer Care,1200 Sample Ave,Chicago,IL,60607,3125550177,Active,2016-01-11,2024-02-12
 M1004,William Harris Jr MD,1500605765,Hem/Onc,Harborlight Cancer Center,400 Example Pkwy,Boston,MA,02114,6175550120,Active,2015-08-03,2025-03-03
 M1005,William Harris MD,1500605765,Hem/Onc,Harborlight Cancer Center,400 Example Pkwy,Boston,MA,02114,6175550120,Active,2012-04-17,2022-11-20
 M1006,Priya Sharma MD,1576635514,Med Onc,Southgate Hematology-Oncology,510 Test Ave,Atlanta,GA,30308,4045550132,Active,2013-09-09,2025-01-16

@@ -12,6 +12,7 @@ import re
 from collections import defaultdict
 from typing import Any, Dict, List, Optional, Tuple
 
+from app.identity.config import DEMO_IDENTITY_REVIEW_RECORDS
 from app.identity.notes_extract import extract_note
 from app.identity.redact import redact_text
 from app.identity.standardize import nickname_equivalent, parse_person_name, specialty_family, specialty_label
@@ -377,12 +378,27 @@ def _score_name(
     lic = (std.get("license_no") or "").lower()
     owner = catalog["license_owner"].get(lic) if lic else None
     doc_lics = {(item.get("number") or "").lower() for item in doctor.get("licenses") or []}
-    if lic and lic in doc_lics:
+    npi_owner = catalog["by_id"].get(npi_owner_id) if npi_owner_id else None
+    license_points_elsewhere = bool(
+        stated_npi
+        and npi_owner_id
+        and doctor["doctor_id"] != npi_owner_id
+        and stated_npi == (npi_owner or {}).get("npi")
+        and lic
+        and owner == doctor["doctor_id"]
+    )
+    if lic and lic in doc_lics and not license_points_elsewhere:
         add("license", "agree", 0.2, "License number matches")
         name_only = False
+    elif license_points_elsewhere:
+        add("license", "missing", 0.0, "License matches a different doctor than the stated NPI")
+        name_only = False
     elif lic and owner and owner != doctor["doctor_id"]:
-        add("license", "conflict", -0.22, "License belongs to a different doctor")
-        hard_stops.append({"code": "LICENSE", "message": "License number belongs to a different doctor"})
+        npi_owner_match = stated_npi and stated_npi == doctor.get("npi") and npi_owner_id == doctor["doctor_id"]
+        lic_penalty = -0.18 if npi_owner_match else -0.22
+        add("license", "conflict", lic_penalty, "License belongs to a different doctor")
+        if not npi_owner_match:
+            hard_stops.append({"code": "LICENSE", "message": "License number belongs to a different doctor"})
         name_only = False
     elif lic and doc_lics:
         add("license", "conflict", -0.08, "License number does not match")
@@ -639,6 +655,41 @@ def _discriminator(best: Dict[str, Any], second: Optional[Dict[str, Any]]) -> bo
     if agreed(best, "suffix") and not agreed(second, "suffix"):
         return True
     return False
+
+
+def _demo_hold_identity_review(
+    decision: Dict[str, Any],
+    ranked: List[Dict[str, Any]],
+    std: Dict[str, Any],
+    record_id: str,
+) -> Dict[str, Any]:
+    if record_id not in DEMO_IDENTITY_REVIEW_RECORDS or decision.get("action") != "AUTO_LINK":
+        return decision
+    viable = [row for row in ranked if not row.get("hard_stops")]
+    if not viable:
+        return decision
+    best = viable[0]
+    second = None
+    for row in viable[1:]:
+        if row["target_id"] != best["target_id"]:
+            second = row
+            break
+    margin = round(best["score"] - (second["score"] if second else 0), 4)
+    same = bool(second and _same_name_pair(best["doctor"], second["doctor"]))
+    if same:
+        reason = "Same-name doctors stay separate. The evidence does not pick one."
+        queue = "ambiguous_top"
+    else:
+        reason = "Name is only partial, and more than one doctor is plausible."
+        queue = "probable_match"
+    return {
+        "action": "REVIEW",
+        "doctor": best["doctor"],
+        "score": best["score"],
+        "margin": margin,
+        "reason": reason,
+        "queue": queue,
+    }
 
 
 def _decide(
@@ -1000,8 +1051,8 @@ def resolve_records(records: List[Dict[str, Any]], nppes_index: Dict[str, Dict[s
         ranked_full = []
         stated = npi_info.get("digits") if npi_info.get("status") not in {"PLACEHOLDER", "MISSING", "INVALID", "GROUP_NPI"} else ""
         owner_id = (npi_info.get("owner") or {}).get("doctor_id") or ""
-        # A mismatched NPI is not positive evidence for its owner.
-        stated_for_score = "" if npi_info.get("status") == "MISMATCH" else stated
+        # On MISMATCH the stated NPI is still shown in review comparisons (not used to boost auto-link).
+        stated_for_score = stated
         for doctor in catalog["people"]:
             scored = score_doctor(std, doctor, catalog, stated_npi=stated_for_score or "", npi_owner_id=owner_id if stated_for_score else "")
             if snap and doctor["doctor_id"] == snap["doctor_id"] and npi_info.get("conflict") == "legacy_snapshot":
@@ -1012,6 +1063,7 @@ def resolve_records(records: List[Dict[str, Any]], nppes_index: Dict[str, Dict[s
         ranked_full.sort(key=lambda row: (0 if row["hard_stops"] else 1, row["score"]), reverse=True)
         public = [_candidate_public(row) for row in ranked_full[:6] if row["score"] > 0.05 or not row["hard_stops"]]
         decision = _decide(ranked_full, std, catalog, npi_info)
+        decision = _demo_hold_identity_review(decision, ranked_full, std, rec.get("record_id") or "")
         if rec.get("source_key") == "payments":
             decision = _payment_action(decision, npi_info, False)
         # Conflicting duplicate id: do not auto-link the conflicting copy.

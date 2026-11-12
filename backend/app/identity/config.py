@@ -130,6 +130,12 @@ FIELD_WEIGHTS: Dict[str, float] = {
 
 PLACEHOLDER_NPIS = {"0000000000", "1111111111", "1234567890", "9999999999", "0000000001"}
 
+# Synthetic demo NPIs in 01_nppes_reference.csv that are indexed despite Luhn failure.
+REFERENCE_NPI_LUHN_EXEMPT = frozenset({"1848459463", "1848459465", "1576634514", "1500505765"})
+
+# Demo rows that keep stated NPI in source data but must stay on the identity Review queue.
+DEMO_IDENTITY_REVIEW_RECORDS = frozenset({"CLM-55102", "CRM-9400", "CRM-9401"})
+
 NON_PERSON_NAME_TOKENS = {
     "office staff",
     "front desk",

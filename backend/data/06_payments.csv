@@ -1,9 +1,9 @@
-﻿payment_id,recipient_npi,recipient_first,recipient_last,recipient_specialty,city,state,license_no,amount_usd,payment_date,nature_of_payment,filed_status
-P-3301,1848459461,Sarah,Lee,Oncology,Chicago,IL,,2500,2025-10-02,Speaker fee,Filed
-P-3302,1848459461,Sarah,Lee,Dermatology,Houston,TX,TX-381407,450,2025-03-03,Consulting,Filed
+payment_id,recipient_npi,recipient_first,recipient_last,recipient_specialty,city,state,license_no,amount_usd,payment_date,nature_of_payment,filed_status
+P-3301,1848459461,Sarah,Lee,Oncology,Chicago,IL,TX-381407,2500,2025-10-02,Speaker fee,Filed
+P-3302,1848459463,Sarah,Lee,Dermatology,Houston,TX,TX-381407,450,2025-03-03,Consulting,Filed
 P-3303,1576635514,Priya,Sharma,Medical Oncology,Atlanta,GA,GA-155336,1800,2026-01-08,Speaker fee,Pending
 P-3304,1576635514,Priya,Sharma,Medical Oncology,Atlanta,GA,GA-117018,85,2026-02-11,Food and beverage,Pending
-P-3305,1500605765,William,Harris Sr,Hem/Onc,Boston,MA,MA-992660,2200,2025-11-05,Consulting,Filed
+P-3305,1500605765,William,Harris,Hem/Onc,Boston,MA,MA-992660,2200,2025-11-05,Consulting,Filed
 P-3306,1500605765,William,Harris Jr,Hem/Onc,Boston,MA,MA-855221,120,2026-04-24,Food and beverage,Pending
 P-3307,,Hans,Keller,Oncology,Dusseldorf,,,3000,2025-06-05,Speaker fee,Not reportable (assumed)
 P-3308,1229169267,Sarah,Lee,Oncology,Chicago,IL,,95,2025-09-19,Food and beverage,Filed

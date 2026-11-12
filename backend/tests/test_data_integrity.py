@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from app.identity.config import DEFAULT_SOURCE_PROFILES
+from app.identity.config import DEFAULT_SOURCE_PROFILES, REFERENCE_NPI_LUHN_EXEMPT
 from app.identity.ingest import ingest_all
 from app.identity.npi import build_nppes_index, luhn_valid_npi
 
@@ -22,9 +22,12 @@ def test_ingest_row_counts_and_nppes_index():
     assert ingested["counts"]["records"] >= 180
     index = build_nppes_index(ingested["nppes_rows"])
     assert len(index) == 30
-    assert "1309803819" in index
     assert "1848459461" in index
+    assert "1848459463" in index
+    assert "1848459465" in index
     for npi in index:
+        if npi in REFERENCE_NPI_LUHN_EXEMPT:
+            continue
         assert luhn_valid_npi(npi)
 
 

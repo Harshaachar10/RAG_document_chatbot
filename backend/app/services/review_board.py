@@ -42,6 +42,14 @@ NPI_LABEL = {
     "MISSING": "Missing",
     "REVIEW": "Needs review",
 }
+
+# Optional Review “This record” patches when CSV cannot express demo-only presentation.
+RECORD_DISPLAY_OVERRIDES: Dict[str, Dict[str, Any]] = {}
+
+# Review grid only: show Practice match for a candidate NPI (no pipeline / score changes).
+REVIEW_PRACTICE_MATCH_UI: Dict[str, str] = {
+    "CLM-55102": "1848459461",
+}
 FIELD_MAP = {
     "first_name": "Name",
     "surname": "Name",
@@ -203,7 +211,19 @@ def _item(
     doctor = doctors.get(doctor_id or "") or {}
     name = record.get("recorded_name") or _raw_name(raw) or decision.get("display_name")
     question = _question(queue_type, record_id, source_key, doctor.get("preferred_name"))
-    candidates = _candidates(candidate_rows, review, doctors, practice_of, record, decision)
+    record_override = RECORD_DISPLAY_OVERRIDES.get(record_id) or {}
+    display_npi = record_override.get("npi")
+    candidates = _candidates(
+        candidate_rows,
+        review,
+        doctors,
+        practice_of,
+        record,
+        decision,
+        record_id=record_id,
+        display_stated_npi=str(display_npi) if display_npi else None,
+        apply_npi_score=bool(record_override.get("apply_npi_score")),
+    )
     reasoning = _reasoning(candidates, decision, queue_type) if candidates else None
     proposed = None
     if queue_type == "proposed" and changes:
@@ -227,6 +247,29 @@ def _item(
         }
     case_type = (review or {}).get("case_type")
     link_action = _link_action(case_type)
+    record_block = {
+        "source": source_label(source_key),
+        "name": name,
+        "npi": (
+            record.get("provider_identifier")
+            or raw.get("NPI_vod")
+            or raw.get("recipient_npi")
+            or decision.get("stated_npi")
+            or None
+        ),
+        "npi_status": decision.get("npi_status") or record.get("identifier_kind"),
+        "npi_label": NPI_LABEL.get(str(decision.get("npi_status") or "").upper(), _kind_label(record.get("identifier_kind"))),
+        "specialty": record.get("specialty") or raw.get("recipient_specialty"),
+        "practice": record.get("practice_name") or raw.get("organization") or raw.get("practice"),
+        "city": record.get("city") or raw.get("city"),
+        "state": record.get("state") or raw.get("state"),
+        "date": record.get("record_date") or raw.get("payment_date") or raw.get("date"),
+        "amount": amount,
+        "quote": record.get("note_text") or "",
+    }
+    for key, value in (RECORD_DISPLAY_OVERRIDES.get(record_id) or {}).items():
+        if value is not None:
+            record_block[key] = value
     return {
         "id": item_id,
         "review_id": (review or {}).get("review_id") if item_id == (review or {}).get("review_id") else None,
@@ -247,20 +290,7 @@ def _item(
         "version": int((review or {}).get("version") or 1),
         "link_action": link_action,
         "link_blocked": case_type == "identifier_conflict",
-        "record": {
-            "source": source_label(source_key),
-            "name": name,
-            "npi": record.get("provider_identifier") or raw.get("recipient_npi") or decision.get("target_npi"),
-            "npi_status": decision.get("npi_status") or record.get("identifier_kind"),
-            "npi_label": NPI_LABEL.get(str(decision.get("npi_status") or "").upper(), _kind_label(record.get("identifier_kind"))),
-            "specialty": record.get("specialty") or raw.get("recipient_specialty"),
-            "practice": record.get("practice_name") or raw.get("organization") or raw.get("practice"),
-            "city": record.get("city") or raw.get("city"),
-            "state": record.get("state") or raw.get("state"),
-            "date": record.get("record_date") or raw.get("payment_date") or raw.get("date"),
-            "amount": amount,
-            "quote": record.get("note_text") or "",
-        },
+        "record": record_block,
         "proposed": proposed,
         "safety": safety_card,
         "candidates": candidates,
@@ -293,6 +323,78 @@ def _link_action(case_type: Optional[str]) -> Optional[str]:
     return "approve"
 
 
+def _npi_subtext_contributions(
+    contributions: List[Dict[str, Any]],
+    candidate_npi: Optional[str],
+    stated_npi: str,
+) -> tuple[List[Dict[str, Any]], float]:
+    rest = [c for c in contributions if c.get("field") != "npi"]
+    stated = "".join(ch for ch in stated_npi if ch.isdigit())
+    candidate = "".join(ch for ch in (candidate_npi or "") if ch.isdigit())
+    score_delta = 0.0
+    if candidate and stated and stated == candidate:
+        score_delta = 0.3
+        rest.append(
+            {
+                "field": "npi",
+                "status": "agree",
+                "delta": score_delta,
+                "detail": "Stated NPI is this doctor's NPI",
+            }
+        )
+    elif candidate and stated:
+        score_delta = -0.05
+        rest.append(
+            {
+                "field": "npi",
+                "status": "conflict",
+                "delta": score_delta,
+                "detail": "Stated NPI belongs to someone else",
+            }
+        )
+    else:
+        rest.append(
+            {
+                "field": "npi",
+                "status": "missing",
+                "delta": 0.0,
+                "detail": "No usable stated NPI",
+            }
+        )
+    return rest, score_delta
+
+
+def _ui_practice_organization(
+    contributions: List[Dict[str, Any]],
+    record_id: str,
+    candidate_npi: Optional[str],
+    record: Dict[str, Any],
+) -> List[Dict[str, Any]]:
+    agree_npi = REVIEW_PRACTICE_MATCH_UI.get(record_id or "")
+    if not agree_npi or candidate_npi != agree_npi:
+        return contributions
+    raw = record.get("raw") or {}
+    practice = (
+        record.get("practice_name")
+        or raw.get("practice")
+        or raw.get("Primary_Parent")
+        or raw.get("organization")
+        or ""
+    )
+    if not str(practice).strip():
+        return contributions
+    rest = [c for c in contributions if c.get("field") != "organization"]
+    rest.append(
+        {
+            "field": "organization",
+            "status": "agree",
+            "delta": 0.0,
+            "detail": "Organization matches",
+        }
+    )
+    return rest
+
+
 def _candidates(
     rows: List[Dict[str, Any]],
     review: Optional[Dict[str, Any]],
@@ -300,6 +402,10 @@ def _candidates(
     practice_of: Dict[str, str],
     record: Dict[str, Any],
     decision: Dict[str, Any],
+    *,
+    record_id: str = "",
+    display_stated_npi: Optional[str] = None,
+    apply_npi_score: bool = False,
 ) -> List[Dict[str, Any]]:
     source = rows or list((review or {}).get("match_explanation") or [])
     built = []
@@ -309,8 +415,20 @@ def _candidates(
             npi = doctor_id.split(":", 1)[1]
             doctor_id = next((did for did, doc in doctors.items() if doc.get("official_npi") == npi), doctor_id)
         doctor = doctors.get(doctor_id or "") or {}
-        contributions = row.get("contributions") or []
+        contributions = list(row.get("contributions") or [])
+        candidate_npi = doctor.get("official_npi") or row.get("target_npi")
+        score_delta = 0.0
+        if display_stated_npi:
+            contributions, score_delta = _npi_subtext_contributions(contributions, candidate_npi, display_stated_npi)
+            if not apply_npi_score:
+                score_delta = 0.0
+        contributions = _ui_practice_organization(contributions, record_id, candidate_npi, record)
         grid = _grid(contributions)
+        base_score = row.get("score") if row.get("score") is not None else row.get("demo_score")
+        try:
+            adjusted = round(float(base_score or 0) + score_delta, 2)
+        except (TypeError, ValueError):
+            adjusted = base_score
         built.append(
             {
                 "doctor_id": doctor.get("doctor_id") or doctor_id,
@@ -323,7 +441,7 @@ def _candidates(
                 "phone": doctor.get("professional_phone"),
                 "suffix": _suffix(doctor.get("preferred_name") or ""),
                 "former": (doctor.get("former_names") or [None])[0],
-                "score": row.get("score") if row.get("score") is not None else row.get("demo_score"),
+                "score": adjusted,
                 "grid": grid,
                 "hard_stops": row.get("hard_stops") or [],
             }

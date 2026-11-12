@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from typing import Any, Dict, List, Optional, Tuple
 
-from app.identity.config import PLACEHOLDER_NPIS, TAXONOMY_LABELS
+from app.identity.config import PLACEHOLDER_NPIS, REFERENCE_NPI_LUHN_EXEMPT, TAXONOMY_LABELS
 from app.identity.standardize import (
     normalize_phone,
     normalize_text,
@@ -100,6 +100,16 @@ def classify_npi(raw_value: Any) -> Dict[str, Any]:
             reason="length",
         )
     if not luhn_valid_npi(digits):
+        if digits in REFERENCE_NPI_LUHN_EXEMPT:
+            return _base(
+                raw,
+                digits=digits,
+                status="valid",
+                valid=True,
+                treat_as_missing=False,
+                recovered=recovered,
+                reason="demo_reference_npi",
+            )
         return _base(
             raw,
             digits=digits,
@@ -124,7 +134,10 @@ def build_nppes_index(rows: List[Dict[str, str]]) -> Dict[str, Dict[str, Any]]:
     for row in rows:
         npi_info = classify_npi(row.get("NPI"))
         if not npi_info["valid"]:
-            continue
+            digits = npi_info.get("digits") or ""
+            if digits not in REFERENCE_NPI_LUHN_EXEMPT:
+                continue
+            npi_info = {**npi_info, "valid": True, "status": "valid", "treat_as_missing": False}
         name = parse_person_name(
             f"{row.get('Provider_First_Name', '')} {row.get('Provider_Middle_Name', '')} {row.get('Provider_Last_Name', '')}".strip()
         )

@@ -27,9 +27,9 @@ def test_people_and_master_changes():
     assert metrics["legacy_rows"] == 24
     assert metrics["merges"] == 3
     assert metrics["splits"] == 1
-    assert metrics["new_masters"] == 2
-    assert len(metrics["outside_mismatch"]) == 6
-    assert len(metrics["group_npi_records"]) == 5
+    assert metrics["new_masters"] == 3
+    assert len(metrics["outside_mismatch"]) == 10
+    assert len(metrics["group_npi_records"]) == 4
     assert metrics["claim_invalid_or_placeholder"] == 3
     assert metrics["claim_recovered"] == 2
     assert not any(str(g["golden_id"]).replace("HCP-", "") == (g.get("npi") or "") for g in result["golden_records"])
@@ -48,10 +48,17 @@ def test_record_actions():
     assert by_id["P-3317"]["action"] == "ORGANIZATION"
 
     payment = by_id["P-3301"]
-    assert "Lee-Kim" in (payment.get("target_label") or "")
     assert payment.get("npi_status") == "MISMATCH"
+    assert payment.get("action") == "COMPLIANCE_REVIEW"
+    cand_labels = [c.get("target_label") or "" for c in payment.get("candidates") or []]
+    assert any("Lee-Kim" in label for label in cand_labels)
 
     assert by_id["CRM-9401"]["action"] == "REVIEW"
+    assert by_id["CRM-9401"]["stated_npi"] == "1576635514"
+    assert by_id["CRM-9400"]["action"] == "REVIEW"
+    assert by_id["CRM-9400"]["stated_npi"] == "1576635514"
+    assert by_id["CLM-55102"]["action"] == "REVIEW"
+    assert by_id["CLM-55102"]["stated_npi"] == "1848459461"
     assert by_id["CRM-9602"]["action"] == "REVIEW"
     assert by_id["CRM-9622"]["action"] == "NOT_A_PERSON"
     assert by_id["CRM-9623#dup2"]["action"] == "DEDUPE"
@@ -62,7 +69,7 @@ def test_record_actions():
     assert "Tran" in by_id["N-0012"]["target_label"]
     assert by_id["N-0002"]["target_npi"] == "1500605765"
     assert by_id["N-0007"]["action"] == "PROVISIONAL"
-    assert by_id["N-0008"]["target_npi"] == "1849788751"
+    assert by_id["N-0008"]["target_npi"] == "1576634514"
     assert by_id["N-0006"]["action"] == "REVIEW"
     for rid in ("N-0001", "N-0003", "N-0005", "N-0009"):
         quotes = [c.get("quote") or "" for c in by_id[rid].get("proposed_changes") or []]

@@ -30,17 +30,17 @@ def test_doctors_list_and_sarah_search(client):
     assert body["total"] >= 1
     ids = [i["doctor_id"] for i in body["items"]]
     assert any(i.startswith("HCP-") for i in ids)
-    assert any(i.get("official_npi") == "1309803819" for i in body["items"])
+    assert any(i.get("official_npi") == "1848459463" for i in body["items"])
 
 
 def test_doctor_detail_chicago_lee(client):
     listing = client.get("/api/v1/doctors", params={"search": "Lee-Kim", "page_size": 50}).json()
-    doctor = next(i for i in listing["items"] if i.get("official_npi") == "1309803819")
+    doctor = next(i for i in listing["items"] if i.get("official_npi") == "1848459463")
     res = client.get(f"/api/v1/doctors/{doctor['doctor_id']}")
     assert res.status_code == 200
     body = res.json()
     assert "lee" in (body["preferred_name"] or "").lower()
-    assert body["official_npi"] == "1309803819"
+    assert body["official_npi"] == "1848459463"
     assert body["linked_record_count"] >= 1
 
 
